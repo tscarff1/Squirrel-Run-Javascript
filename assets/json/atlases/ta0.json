@@ -1,0 +1,52 @@
+{"frames": [
+
+{
+	"filename": "assets1_bg.png",
+	"frame": {"x":2,"y":2,"w":768,"h":1024},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":768,"h":1024},
+	"sourceSize": {"w":768,"h":1024}
+},
+{
+	"filename": "assets1_btn_about.png",
+	"frame": {"x":2,"y":1028,"w":453,"h":84},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":453,"h":84},
+	"sourceSize": {"w":453,"h":84}
+},
+{
+	"filename": "assets1_btn_back.png",
+	"frame": {"x":457,"y":1028,"w":226,"h":84},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":0,"w":226,"h":84},
+	"sourceSize": {"w":227,"h":84}
+},
+{
+	"filename": "assets1_btn_die.png",
+	"frame": {"x":2,"y":1114,"w":453,"h":84},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":453,"h":84},
+	"sourceSize": {"w":453,"h":84}
+},
+{
+	"filename": "assets1_btn_play.png",
+	"frame": {"x":2,"y":1200,"w":453,"h":83},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":0,"y":0,"w":453,"h":83},
+	"sourceSize": {"w":453,"h":84}
+}],
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "ta0.png",
+	"format": "RGBA8888",
+	"size": {"w":772,"h":1285},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:62cdb19bd5dcc21579b51d8fc4d8a639:c1e819bf9cc10dd97b309304bd0c7af5:a74fa1519b57bd2638f6bcbf7f331633$"
+}
+}
