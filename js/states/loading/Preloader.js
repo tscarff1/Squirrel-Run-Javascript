@@ -26,6 +26,8 @@ BasicGame.Preloader.prototype = {
 
 
         this.load.atlas('ta0', 'assets/images/atlases/ta0.png', 'assets/json/atlases/ta0.json');
+        this.load.atlas('Play_TA', 'assets/images/Play_TA.png', 'assets/json/Play_TA.json');
+        this.load.atlas('UI_TA', 'assets/images/UI_TA.png', 'assets/json/UI_TA.json');
     },
 
     create: function() {

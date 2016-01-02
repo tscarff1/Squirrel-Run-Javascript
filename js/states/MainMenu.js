@@ -9,32 +9,29 @@ BasicGame.MainMenu.prototype = {
     },
 
     create: function() {
-        //create your stuff here
-        var bg = this.add.sprite(0, 0, 'ta0', 'assets1_bg.png');
-        var startBtn = this.add.button(0, 0, 'ta0', btnClick, this, 'assets1_btn_play.png', 'assets1_btn_play.png', 'assets1_btn_play.png');
-        startBtn.x = this.game.width * .5 - (startBtn.width * .5);
-        startBtn.y = this.game.height * .5 - (startBtn.height * .5);
+        this.stage.backgroundColor = '#006fe6'
+        
+        this.add.sprite(0,0, 'UI_TA').frameName ='Toon the Squirrel Standing';
+        var title = this.add.sprite(100,100, 'UI_TA');
+        title.frameName ='Title';
+        title.scale.setTo(.8,.8);
+        title.anchor.setTo(.5,.5);
+        title.position.setTo(this.game.width/2, 2*this.game.height/5);
 
-        var aboutBtn = this.add.button(0, 0, 'ta0', btnClick, this, 'assets1_btn_about.png', 'assets1_btn_about.png', 'assets1_btn_about.png');
-        aboutBtn.x = this.game.width * .5 - (aboutBtn.width * .5);
-        aboutBtn.y = this.game.height * .5 + aboutBtn.height;
 
-
-        function btnClick(target) {
-
-            if (target == startBtn) {
-                this.game.state.start('Game');
-            } else if (target == aboutBtn) {
-                this.game.state.start('About');
-            } else {
-                console.log('FAIL');
-            }
-        }
+        this.startBtn = this.game.add.button(0,0, 'UI_TA', this.onClickFunction, this, 'ButtonStart', 'ButtonStart', 'ButtonStart');
+        this.startBtn.anchor.setTo(.5,.5);
+        this.startBtn.position.setTo(3* this.game.width/8 - this.startBtn.width/2, 
+            7 * this.game.height/8 - this.startBtn.height/2);
     },
 
     update: function() {
         //Do some nice funky main menu stuff here
 
+    },
+
+    onClickFunction: function(btn){
+        this.game.state.start('Game');
     }
 
 };

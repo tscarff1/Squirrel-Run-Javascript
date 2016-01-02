@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="user-scalable=0, initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, minimal-ui=1">
-    <title>Brinkbit - Mobile Basic Game Blank Template Phaser</title>
+    <title>Squirrel Run</title>
     <script src="js/libs/phaser.min.js"></script>
     <script src="js/states/loading/Boot.js"></script>
     <script src="js/states/loading/Preloader.js"></script>
     <script src="js/states/MainMenu.js"></script>
     <script src="js/states/Game.js"></script>
-    <script src="js/states/About.js"></script>
+    <script src="js/states/Instructions.js"></script>
     <link rel="stylesheet" type="text/css" href="css/style.css">
-    <script type="text/javascript">
+    
+</head>
+
+<body>
+    <div>
+<script type="text/javascript">
         var game = new Phaser.Game(750, 450, Phaser.AUTO, 'game');
         //Add the States your game has.
         //remember to include them above.
@@ -19,12 +24,10 @@
         game.state.add('Preloader', BasicGame.Preloader);
         game.state.add('MainMenu', BasicGame.MainMenu);
         game.state.add('Game', BasicGame.Game);
-        game.state.add('About', BasicGame.About);
+        game.state.add('Instructions', BasicGame.About);
         //Now start the Boot state.
         game.state.start('Boot');
     </script>
-</head>
-
-<body>
+    </div>
 </body>
 </html>
