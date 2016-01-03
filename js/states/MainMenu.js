@@ -9,7 +9,6 @@ BasicGame.MainMenu.prototype = {
     },
 
     create: function() {
-        this.stage.backgroundColor = '#006fe6'
         
         this.add.sprite(0,0, 'UI_TA').frameName ='Toon the Squirrel Standing';
         var title = this.add.sprite(100,100, 'UI_TA');

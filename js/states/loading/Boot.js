@@ -17,9 +17,9 @@ BasicGame.Boot.prototype = {
         this.scale.setShowAll();
         this.scale.pageAlignHorizontally = false;
         this.scale.pageAlignVertically = false;
-        this.scale.setScreenSize(false);
+        //this.scale.setScreenSize(false);
         this.scale.refresh();
-        this.game.stage.backgroundColor = '#000000';
+        this.game.stage.backgroundColor = '#006fe6';
 
     },
 
