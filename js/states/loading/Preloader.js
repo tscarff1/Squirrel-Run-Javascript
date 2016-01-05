@@ -26,6 +26,8 @@ BasicGame.Preloader.prototype = {
         this.load.atlas('ta0', 'assets/images/atlases/ta0.png', 'assets/json/atlases/ta0.json');
         this.load.atlasJSONHash('Play_TA', 'assets/images/Play_TA.png', 'assets/json/Play_TA.json');
         this.load.atlasJSONHash('UI_TA', 'assets/images/UI_TA.png', 'assets/json/UI_TA.json');
+
+        this.load.bitmapFont('zantroke', 'assets/fonts/zantroke_0.png', 'assets/fonts/zantroke.fnt');
     },
 
     create: function() {
