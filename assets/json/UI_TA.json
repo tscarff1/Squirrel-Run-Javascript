@@ -76,4 +76,5 @@
 "rotated":false,"trimmed":false,
 "spriteSourceSize":{"x":0,"y":0,"w":900,"h":265},
 "sourceSize":{"w":900,"h":265}}],
+
 "meta":{"app":"http://www.leshylabs.com/apps/sstool/","version":"Leshy SpriteSheet Tool v0.8.4","image":"UI_TA.png","size":{"w":900,"h":751},"scale":1}}

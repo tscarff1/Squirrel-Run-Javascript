@@ -25,6 +25,16 @@ BasicGame.MainMenu.prototype = {
 
         this.startTxt = this.add.bitmapText(this.startBtn.position.x-5, this.startBtn.position.y, 'zantroke', 'START', 30);
         this.startTxt.anchor.setTo(.5,.5);
+
+        this.startGroup = this.add.group();
+        this.startGroup.add(this.startBtn);
+        this.startGroup.add(this.startTxt);
+
+        this.startBtn.onInputOver.add(this.tiltButton, this, 0);
+        this.startBtn.onInputOut.add(this.stopTilt, this, 0);
+
+        this.tiltTween;
+
     },
 
     update: function() {
@@ -34,6 +44,25 @@ BasicGame.MainMenu.prototype = {
 
     onClickFunction: function(btn){
         this.game.state.start('Game');
-    }
+    },
 
+    tiltButton: function(btn){
+        var txt;
+        if(btn = this.startBtn)
+            txt = this.startTxt;
+
+        this.tiltTween = this.add.tween(btn).to({angle: -20}, 2000,
+            function(t){
+                return Math.sin(Math.PI * 2 * t);
+            }, true, 0, -1);
+        tiltTween.start();
+    
+        this.add.tween(txt).to({angle: -20}, 2000,
+            function(t){
+                return Math.sin(Math.PI * 2 * t);
+            }, true, 0, -1).start();
+    },
+
+    stopTilt: function(btn){
+    }
 };
