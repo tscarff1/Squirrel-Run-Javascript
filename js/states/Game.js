@@ -23,11 +23,13 @@ BasicGame.Game.prototype = {
 		this.HURTTIME = 0;
 		this.HURTTIMER = 100;
 		this.HYPERTIME = 0;
-		this.HYPERTIMER = 150
+		this.HYPERTIMER = 300
 
 		this.ACORNCHANCE = .005;
 		this.ACORNMINY = this.game.height/2;
-		
+		this.DRINKCHANCE = .99;
+		this.DRINKSPEED = 5000;
+
 		this.MOLECHANCE = 0.05;
 		this.MOLEBOX = [10,20,20,10];
 		this.BCHANCE = .005;
@@ -35,6 +37,8 @@ BasicGame.Game.prototype = {
 
 		this.SAMXRADIUS = this.game.width/2  +20;
 		this.SAMYRADIUS = this.game.height-20;
+
+		this.winterDistance = -1000;
 	},
 
 	create: function(){
@@ -79,23 +83,21 @@ BasicGame.Game.prototype = {
 		this.updateScore();
 		this.updateSAM();
 
+		this.physics.arcade.collide(this.toon, this.botBound, this.landing, null, this);
+		this.moveToon();
+		this.updateHyper();
+
 		this.moleStarter();
 		this.baseballStarter();
 		this.mole.updateCrop();
-		this.physics.arcade.collide(this.toon, this.botBound, this.landing, null, this);
-		this.moveToon();
 		
-
-		//----- ACORN METHODS -----
-		//Should we spawn acorns?
 		this.acornSpawner();
-
+		this.drinkSpawner();
 		this.checkCollisions();
 
 		//----- ENEMY STUFF -----
 		if(this.baseball.position.x < this.game.width +10)
 			this.baseball.angle--;
-
 		
 
 		if(this.toon.isHurt){
@@ -128,9 +130,20 @@ BasicGame.Game.prototype = {
 	},
 
 	setupDrink: function(){
-		this.drink = this.add.sprite(0,0,'Play_TA','EnergyDrink');
+		this.drink = this.add.sprite(this.game.width + 50,250,'Play_TA','EnergyDrink');
+		this.drink.hasReset = true;
 		this.drink.scale.setTo(.6,.6);
 		this.drink.angle = -20;
+		this.drink.anchor.setTo(.5,.5);
+		this.drinkglow = this.add.sprite(this.game.width + 50,250, 'Play_TA', 'EnergyDrink');
+		this.drinkglow.anchor.setTo(.5,.5);
+		this.drinkglow.alpha = .7;
+		this.drinkglow.scale.setTo(.61,.61);
+		this.glowtween = this.add.tween(this.drinkglow.scale).to({x: .75, y:.75}, 800, Phaser.Easing.Linear.Out, true, 0, Number.MAX_VALUE, true);
+		//this.glowtween.yoyo(true, 0);
+		this.drinkglow.angle = -20;
+		this.drinkglow.tint = 0xF2FF00
+		this.drinkglow.blendMode = PIXI.blendModes.ADD;
 	},
 
 	setupPhysics: function(){
@@ -154,7 +167,17 @@ BasicGame.Game.prototype = {
 
 		var hyperPanel = this.add.sprite(220,55,'UI_TA', 'Hyper Bar Panel');
 		this.hyperBar = this.add.sprite(231, 58, 'UI_TA', 'Hyper Bar Meter');
+		this.hyperBar.MAXWIDTH = this.hyperBar.width;
+		this.hyperBar.width = 1;
 		this.scoreText = this.add.bitmapText(220, 10, 'zantroke', 'Score: 0', 30);
+
+		var acornBG = this.add.sprite(510,10,'Play_TA', 'acorn');
+		acornBG.angle = 40;
+		acornBG.scale.setTo(1.2,1.2);
+		acornBG.tint = 0x888888;
+		acornBG.alpha = .6;
+		
+		//acornBG.blendMode = PIXI.blendModes.MULTIPLY;
 	},
 
 	setUpSAM: function(){
@@ -263,6 +286,55 @@ BasicGame.Game.prototype = {
 
 	},
 
+	drinkSpawner: function(){
+		if(Math.random() < this.DRINKCHANCE && this.drink.hasReset && !this.toon.isHyper){
+			this.drinktween1 = this.add.tween(this.drink).to({x: -1 * this.drink.width-20}, this.DRINKSPEED);
+			this.drinktween2 = this.add.tween(this.drinkglow).to({x: -1 * this.drink.width - 20}, this.DRINKSPEED);
+			this.drinktween1.start();
+			this.drinktween2.start();
+			this.glowtween.yoyo(true, 0);
+			this.drink.hasReset = false;
+			this.drinktween1.onComplete.addOnce(this.resetDrink, this);
+		}
+	},
+
+	resetDrink: function(){
+		this.drink.position.x = this.game.width + 40;
+		this.drinkglow.position.x = this.game.width + 40;
+		this.drinktween1.stop();
+		this.drinktween2.stop();
+		this.drink.hasReset = true;
+	},
+
+	startHyper: function(){
+		this.toon.isHyper = true;
+		this.x10Text = this.add.sprite(this.game.width/2,130, 'UI_TA', 'x10 text');
+		this.x10Text.anchor.setTo(.5,.5);
+		this.bonusTextGlow = this.add.sprite(this.game.width/2, 130, 'UI_TA', 'x10 text');
+		this.bonusTextGlow.anchor.setTo(.5,.5);
+		this.bonusTextGlow.alpha = .6;
+		var bonusTextEffect = this.add.tween(this.bonusTextGlow.scale).to({x: 1.1, y:1.1}, 
+			400, Phaser.Easing.Linear.Out, true, 0, Number.MAX_VALUE, true);
+		bonusTextEffect.yoyo(true,0);
+	},
+
+	updateHyper: function(){
+		if(this.toon.isHyper){
+			this.HYPERTIME++;
+			this.hyperBar.width = this.hyperBar.MAXWIDTH * (1-this.HYPERTIME/this.HYPERTIMER);
+		}
+		if(this.HYPERTIME == this.HYPERTIMER){
+			this.stopHyper();
+		}
+	},
+
+	stopHyper: function(){
+		this.toon.isHyper = false;
+		this.x10Text.destroy();
+		this.HYPERTIME = 0;
+		this.bonusTextGlow.destroy();
+	},
+
 	//----- Update functions -----
 	updateSAM: function(){
 		//Makes the background darker as the sun goes down and lighter as it comes up
@@ -284,7 +356,11 @@ BasicGame.Game.prototype = {
 
 	updateScore: function(){
 		if(this.scoreTime >= this.SCORETIMER){
-			this.score += 1 * this.scoreMult;
+			var hyperMult = 1;
+			if(this.toon.isHyper)
+				hyperMult =  10;
+			var scoreAdder = this.scoreMult * hyperMult;
+			this.score += scoreAdder;
 			this.scoreText.text = "Score: " + this.score;
 			this.scoreTime = 0;	
 		}
@@ -323,6 +399,13 @@ BasicGame.Game.prototype = {
 				item.destroy();
 			}
 		}.bind(this));
+
+
+		//check for collision with energy drink
+		if(Phaser.Rectangle.intersects(this.toon.hitbox, this.drink)){
+			this.resetDrink();
+			this.startHyper();
+		}
 	},
 
 	//----- ENEMY FUNCTIONS -----
@@ -346,11 +429,10 @@ BasicGame.Game.prototype = {
 
 	baseballStarter: function(){
 		if(Math.random() < this.BCHANCE && this.baseball.isReset == true){
-			console.log("starting baseball");
 			this.baseball.isReset = false;
 
 			this.baseball.moveTime = this.ROADSPEED + Math.floor(Math.random() * 400)-200;
-			this.baseball.xTween = this.add.tween(this.baseball).to({x:0}, this.ROADSPEED);
+			this.baseball.xTween = this.add.tween(this.baseball).to({x:-1 * this.baseball.width}, this.ROADSPEED);
 			this.baseball.xTween.onComplete.add(this.resetBaseball, this);
 			this.baseball.xTween.start();
 			
