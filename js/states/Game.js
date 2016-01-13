@@ -9,6 +9,8 @@ BasicGame.Game.prototype = {
 		this.scoreTime = 0;
 		this.scoreMult = 1;
 		this.SCORETIMER = 10;
+		this.DECAYTIMER = 300;
+		this.decayTime = 0;
 		
 		this.ROADSPEED = 8000;
 		this.ROADHEIGHT = 3*this.game.height/5;
@@ -21,24 +23,28 @@ BasicGame.Game.prototype = {
 		this.TOONSPEED = 150;
 		this.canJump = false;
 		this.HURTTIME = 0;
-		this.HURTTIMER = 100;
+		this.HURTTIMER = 60;
 		this.HYPERTIME = 0;
 		this.HYPERTIMER = 300
 
 		this.ACORNCHANCE = .005;
 		this.ACORNMINY = this.game.height/2;
+		this.acornsCollected = 0;
 		this.DRINKCHANCE = .99;
 		this.DRINKSPEED = 5000;
 
-		this.MOLECHANCE = 0.05;
+		this.MOLECHANCE = 0.005;
 		this.MOLEBOX = [10,20,20,10];
-		this.BCHANCE = .005;
-		this.BBOX =[5,5,5,5]
+		this.MOLEPOPDIST = 100;
+		this.BCHANCE = .002;
+		this.BBOX =[5,5,5,5];
+		this.BSPEED=7000;
 
 		this.SAMXRADIUS = this.game.width/2  +20;
 		this.SAMYRADIUS = this.game.height-20;
 
-		this.winterDistance = -1000;
+		this.winterDistance = 1000;
+		this.winterSpeed = .5;
 	},
 
 	create: function(){
@@ -72,9 +78,12 @@ BasicGame.Game.prototype = {
 		//Now let's set up acorns
 		this.acorns = this.add.group();
 		//That was easy!
-	
+
+		this.setupWinter();
+
 		//Has to go last so that the display is on top
 		this.setupDisplay();
+
 	},
 
 	update: function(){
@@ -82,6 +91,7 @@ BasicGame.Game.prototype = {
 
 		this.updateScore();
 		this.updateSAM();
+		this.updateWinter();
 
 		this.physics.arcade.collide(this.toon, this.botBound, this.landing, null, this);
 		this.moveToon();
@@ -89,8 +99,14 @@ BasicGame.Game.prototype = {
 
 		this.moleStarter();
 		this.baseballStarter();
-		this.mole.updateCrop();
-		
+
+		//Make the mole pop out of the ground as needed
+		if(this.moleEnemy.position.x + this.game.width - (this.toon.position.x  + this.toon.width) <= this.MOLEPOPDIST
+		 && this.mole.position.y > this.BOTTOM - this.mole.height
+		 && !this.mole.hasHit){
+			this.mole.position.y -= 1;
+		}
+
 		this.acornSpawner();
 		this.drinkSpawner();
 		this.checkCollisions();
@@ -109,13 +125,13 @@ BasicGame.Game.prototype = {
 			this.HURTTIME++;
 		}
 	},
-
-	/*// Comment this out when testing 'final' versions of game
+/*
+	// Comment this out when testing 'final' versions of game
 	render: function(){
 		game.debug.geom( this.toon.hitbox, 'rgba(255,0,0, .7)' ) ;
 		game.debug.geom( this.moleEnemy.hitbox, 'rgba(0,255,0, .7)' ) ;
 		game.debug.geom( this.baseball.hitbox, 'rgba(0,255,0, .7)' );
-		
+		game.debug.geom( this.acornDisplay.cropRect, 'rgba(0,0,255,.7)');
 	},
 */
 	//----- SETUP FUNCTIONS -----
@@ -162,7 +178,7 @@ BasicGame.Game.prototype = {
 	setupDisplay: function(){
 		var panel = this.add.sprite(0,0,'UI_TA', 'panel');
 		panel.anchor.setTo(.5,.5);
-		panel.position.setTo(this.stage.width/2 - panel.width/2, this.game.height/10);
+		panel.position.setTo(this.stage.width/2 - panel.width, this.game.height/10);
 		panel.scale.setTo(2.7,1.6);
 
 		var hyperPanel = this.add.sprite(220,55,'UI_TA', 'Hyper Bar Panel');
@@ -177,7 +193,17 @@ BasicGame.Game.prototype = {
 		acornBG.tint = 0x888888;
 		acornBG.alpha = .6;
 		
-		//acornBG.blendMode = PIXI.blendModes.MULTIPLY;
+		this.acornDisplay = this.add.sprite(510,10,'Play_TA','acorn');
+		this.acornDisplay.angle = 40;
+		this.acornDisplay.scale.setTo(1.2,1.2);
+		this.acornDisplay.tint = 0xeeeeee;
+		 //	A mask is a Graphics object
+	    this.acornMask = game.add.graphics(0, 0);
+    	this.acornMask.beginFill(0xffffff);
+    	this.acornMask.drawRect(485,10, this.acornDisplay.width + 10, 155);
+  		this.acornDisplay.mask = this.acornMask;
+
+		this.multText = this.add.bitmapText(530, 50, 'zantroke', 'x1', 24);
 	},
 
 	setUpSAM: function(){
@@ -186,6 +212,16 @@ BasicGame.Game.prototype = {
 		this.moon = this.add.sprite(0,0, 'Play_TA', 'moon');
 		this.moon.anchor.x=.5;
 		this.samAngle = 0;
+	},
+
+	setupWinter: function(){
+		this.caution = this.add.sprite(10,this.game.height/3,'Play_TA', 'Caution');
+		this.caution.scale.setTo(1.5,1.5);
+
+		this.cautionText = this.add.bitmapText(this.caution.position.x + this.caution.width/2,
+			this.game.height/3 - 22,'zantroke', 'WINTER', 20);
+		this.cautionText.tint = 0xff0000;
+		this.cautionText.anchor.setTo(.5,0)
 	},
 
 	setupEnemies: function(){
@@ -197,7 +233,7 @@ BasicGame.Game.prototype = {
 	setupMole: function(){
 		this.mole = this.add.sprite(this.game.width,this.BOTTOM,'Play_TA', 'MoleEnemy');
 		this.dirt = this.add.sprite(this.game.width,0,'Play_TA', 'MoleDirt');
-		this.mole.position.y = this.BOTTOM - this.mole.height;
+		this.mole.position.y = this.BOTTOM - 2* 	this.dirt.height;
 		this.dirt.position.y = this.BOTTOM - this.dirt.height;
 	
 		this.moleEnemy = this.add.group();
@@ -210,9 +246,23 @@ BasicGame.Game.prototype = {
 			this.MOLEBOX[1] + this.BOTTOM -this.moleEnemy.height,
 			this.moleEnemy.width - this.MOLEBOX[2], this.moleEnemy.height - this.MOLEBOX[3])
 
-		this.moleCrop = new Phaser.Rectangle(0,0, this.mole.width, 10);
-		//this.mole.crop(this.moleCrop);
-		this.moleCropTween = this.add.tween(this.moleCrop).to({height: this.mole.height}, 2000);
+		//	The way I'd like to hide the mole, but is unfortunately not working
+	    /*this.moleMask = game.add.graphics(0, 0);
+	    this.moleMask.beginFill(0xffffff);
+	    this.moleMask.drawRect(this.mole.position.x, this.mole.position.x, this.mole.width, this.mole.height);
+	   	this.mole.mask = this.moleMask;
+*/
+	   	//This is the way im doing it instead - manually draw the road
+	   	var graphics = this.add.graphics(0, 0);	
+		graphics.moveTo(0,this.BOTTOM+1);
+	    graphics.beginFill(0x333333);
+	    graphics.lineTo(0, this.game.stage.height);
+	    graphics.lineTo(this.game.stage.width, this.game.stage.height);
+	    graphics.lineTo(this.game.stage.width, this.BOTTOM);
+	    
+	    graphics.endFill();
+	    graphics.moveTo(0,0);
+
 	},
 
 	setupBaseball: function(){
@@ -354,7 +404,29 @@ BasicGame.Game.prototype = {
 		this.samAngle-=.12;
 	},
 
+	updateWinter: function(){
+		this.cautionText.text = Math.floor(Math.abs(this.winterDistance)/10) + 'm';
+		var winterMod =1;
+		if(this.toon.isHyper)
+			winterMod *= -1
+		if(this.toon.isHurt)
+			winterMod += 1.3;
+		this.winterDistance -= winterMod*.5;
+	},
+
 	updateScore: function(){
+		var multTime = (6/this.scoreMult) * this.DECAYTIMER;
+		this.acornMask.position.y = 10 + (this.decayTime/multTime)*this.acornDisplay.height;
+		if(this.scoreMult > 1){
+			this.decayTime++;
+			if(this.decayTime >= multTime){
+				this.scoreMult--;
+				this.decayTime = 0;
+			}
+		}
+
+		this.multText.text = 'x' + this.scoreMult;
+
 		if(this.scoreTime >= this.SCORETIMER){
 			var hyperMult = 1;
 			if(this.toon.isHyper)
@@ -373,7 +445,8 @@ BasicGame.Game.prototype = {
 	updateHitboxes: function(){
 		this.toon.hitbox.x = this.toon.position.x + this.TOONBOX[0];
 		this.toon.hitbox.y = this.toon.position.y + this.TOONBOX[1];
-		this.moleEnemy.hitbox.x = this.moleEnemy.position.x + this.MOLEBOX[0] + this.game.width;
+		if(!this.mole.hasHit)
+			this.moleEnemy.hitbox.x = this.moleEnemy.position.x + this.MOLEBOX[0] + this.game.width;
 		this.baseball.hitbox.x = this.baseball.position.x + this.BBOX[0] -  this.baseball.width/2;
 		this.baseball.hitbox.y = this.baseball.position.y + this.BBOX[1] - this.baseball.height/2;
 	},
@@ -383,9 +456,9 @@ BasicGame.Game.prototype = {
 		this.enemies.forEach(function(enemy){
 				if(Phaser.Rectangle.intersects(this.toon.hitbox, enemy.hitbox)){
 					if(enemy == this.moleEnemy)
-						this.resetMole();
+						this.collideMole();
 					else if(enemy == this.baseball)
-						this.resetBaseball();
+						this.collideBaseball();
 					this.toon.animations.stop(null, true);
 					this.toon.frameName = 'Toon_Tripping';
 					this.toon.isHurt = true;
@@ -396,7 +469,9 @@ BasicGame.Game.prototype = {
 		this.acorns.forEach(function(item){
 			if(Phaser.Rectangle.intersects(this.toon.hitbox, item)){
 				this.scoreMult++;
+				this.decayTime = 0;
 				item.destroy();
+				this.acornsCollected++;
 			}
 		}.bind(this));
 
@@ -413,6 +488,7 @@ BasicGame.Game.prototype = {
 		if(this.moleEnemy.moveTween != undefined)
 			this.moleEnemy.moveTween.stop();
 		this.moleEnemy.position.x = 0;
+		this.mole.position.y = this.BOTTOM - 2* this.dirt.height;
 		this.moleEnemy.isReset = true;
 		//this.moleCrop.height = 0;
 		
@@ -421,18 +497,26 @@ BasicGame.Game.prototype = {
 	moleStarter:function(){
 		if(Math.random() < this.MOLECHANCE && this.moleEnemy.isReset == true){
 			this.moleEnemy.isReset = false;
+			this.mole.hasHit = false;
 			this.moleEnemy.moveTween = this.add.tween(this.moleEnemy).to({x:-1 * (this.game.width + this.mole.width + 100)}, this.ROADSPEED);
 			this.moleEnemy.moveTween.onComplete.add(this.resetMole, this);
 			this.moleEnemy.moveTween.start();
 		}
 	},
 
+	collideMole: function(){
+		var dropTween = this.add.tween(this.mole).to({y:this.BOTTOM - 2 * this.dirt.height}, 300);
+		this.mole.hasHit = true;
+		dropTween.start();
+		this.moleEnemy.hitbox.x = this.game.width;
+	},
+
 	baseballStarter: function(){
 		if(Math.random() < this.BCHANCE && this.baseball.isReset == true){
 			this.baseball.isReset = false;
 
-			this.baseball.moveTime = this.ROADSPEED + Math.floor(Math.random() * 400)-200;
-			this.baseball.xTween = this.add.tween(this.baseball).to({x:-1 * this.baseball.width}, this.ROADSPEED);
+			this.baseball.moveTime = this.BSPEED + Math.floor(Math.random() * 400)-200;
+			this.baseball.xTween = this.add.tween(this.baseball).to({x:-1 * this.baseball.width}, this.baseball.moveTime);
 			this.baseball.xTween.onComplete.add(this.resetBaseball, this);
 			this.baseball.xTween.start();
 			
@@ -442,11 +526,17 @@ BasicGame.Game.prototype = {
 		}
 	},
 
+	collideBaseball: function(){
+		this.baseball.yTween.stop();
+		this.baseball.endTween = this.add.tween(this.baseball).to({y: -50},800, Phaser.Easing.Cubic.Out);
+		this.baseball.endTween.onComplete.add(this.resetBaseball, this);
+		this.baseball.endTween.start();
+	},
+
 	resetBaseball: function(){	
 		this.baseball.xTween.stop();
 		this.baseball.yTween.stop();
 		this.xOffset = 20 + Math.floor(Math.random() * 30);
-		
 		this.baseball.position.y = this.game.height/2+20;
 		this.baseball.position.x = this.game.width + this.baseball.width + 20;
 		this.baseball.isReset = true;
