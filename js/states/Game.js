@@ -178,7 +178,7 @@ BasicGame.Game.prototype = {
 	setupDisplay: function(){
 		var panel = this.add.sprite(0,0,'UI_TA', 'panel');
 		panel.anchor.setTo(.5,.5);
-		panel.position.setTo(this.stage.width/2 - panel.width, this.game.height/10);
+		panel.position.setTo(this.stage.width/2 - 2 * panel.width, this.game.height/10);
 		panel.scale.setTo(2.7,1.6);
 
 		var hyperPanel = this.add.sprite(220,55,'UI_TA', 'Hyper Bar Panel');
@@ -222,6 +222,24 @@ BasicGame.Game.prototype = {
 			this.game.height/3 - 22,'zantroke', 'WINTER', 20);
 		this.cautionText.tint = 0xff0000;
 		this.cautionText.anchor.setTo(.5,0)
+
+		//Set up the snow particles
+		var bmd = game.add.bitmapData(64, 64);
+	    var radgrad = bmd.ctx.createRadialGradient(32, 32, 2, 32, 32, 20);
+	    radgrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+	    radgrad.addColorStop(1, 'rgba(200, 200, 200, 0)');
+	    bmd.context.fillStyle = radgrad;
+	    bmd.context.fillRect(0, 0, 64, 64);
+    	//  Put the bitmapData into the cache
+	    //set up the emitter to emit the snow particles
+		this.snowEmitter = this.game.add.emitter(game.world.centerX, 10, 80);
+   		this.snowEmitter.makeParticles(bmd);
+   		this.snowEmitter.width = 300;
+   		this.snowEmitter.start(false, 1000,60);
+
+   		this.winterClouds = this.add.sprite(0,0,'Play_TA', 'Winter_1');
+   		this.winterClouds.scale.setTo(.6,.6);
+   		this.winterClouds.anchor.setTo(1,0);
 	},
 
 	setupEnemies: function(){
@@ -405,13 +423,18 @@ BasicGame.Game.prototype = {
 	},
 
 	updateWinter: function(){
-		this.cautionText.text = Math.floor(Math.abs(this.winterDistance)/10) + 'm';
-		var winterMod =1;
-		if(this.toon.isHyper)
-			winterMod *= -1
-		if(this.toon.isHurt)
-			winterMod += 1.3;
-		this.winterDistance -= winterMod*.5;
+		if(this.winterDistance > 0){
+			this.cautionText.text = Math.floor(Math.abs(this.winterDistance)/10) + 'm';
+			var winterMod =1;
+			if(this.toon.isHyper)
+				winterMod *= -1
+			if(this.toon.isHurt)
+				winterMod += 1.3;
+			this.winterDistance -= winterMod*.5;
+
+			this.winterClouds.position.x = -1 * this.winterDistance;
+			this.snowEmitter.x = this.winterClouds.position.x - this.winterClouds.width/2;
+		}
 	},
 
 	updateScore: function(){
