@@ -37,13 +37,13 @@
 "spriteSourceSize":{"x":0,"y":0,"w":75,"h":12},
 "sourceSize":{"w":75,"h":12}},
 
-{"filename":"Crow_2_1",
+{"filename":"Crow_1_1",
 "frame":{"x":429,"y":241,"w":166,"h":126},
 "rotated":false,"trimmed":false,
 "spriteSourceSize":{"x":0,"y":0,"w":166,"h":126},
 "sourceSize":{"w":166,"h":126}},
 
-{"filename":"Crow_1_1",
+{"filename":"Crow_1_2",
 "frame":{"x":0,"y":241,"w":166,"h":139},
 "rotated":false,"trimmed":false,
 "spriteSourceSize":{"x":0,"y":0,"w":166,"h":139},

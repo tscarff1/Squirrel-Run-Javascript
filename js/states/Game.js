@@ -5,6 +5,7 @@ BasicGame.Game = function(game){
 
 BasicGame.Game.prototype = {
 	preload: function(){
+	/*Score related Stuff*/
 		this.score = 0;
 		this.scoreTime = 0;
 		this.scoreMult = 1;
@@ -12,6 +13,7 @@ BasicGame.Game.prototype = {
 		this.DECAYTIMER = 300;
 		this.decayTime = 0;
 		
+	/* Road related stuff */
 		this.ROADSPEED = 8000;
 		this.ROADHEIGHT = 3*this.game.height/5;
 		this.BOTTOM = 7*this.game.height/8;
@@ -19,38 +21,53 @@ BasicGame.Game.prototype = {
 		this.CURSORS = this.game.input.keyboard.createCursorKeys();
 		this.JUMPBUTTON = this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 		
+	/* Toon stats n' stuff*/
 		this.TOONBOX = [30,30,50,40];
 		this.TOONSPEED = 150;
 		this.canJump = false;
 		this.HURTTIME = 0;
-		this.HURTTIMER = 60;
+		this.HURTTIMER = 90;
 		this.HYPERTIME = 0;
 		this.HYPERTIMER = 300
 
+	// Bonus related stuff
 		this.ACORNCHANCE = .005;
 		this.ACORNMINY = this.game.height/2;
 		this.acornsCollected = 0;
 		this.DRINKCHANCE = .99;
 		this.DRINKSPEED = 5000;
 
+	//Enemy related stuff
 		this.MOLECHANCE = 0.005;
 		this.MOLEBOX = [10,20,20,10];
 		this.MOLEPOPDIST = 100;
 		this.BCHANCE = .002;
 		this.BBOX =[5,5,5,5];
 		this.BSPEED=7000;
+		this.CROWCHANCE = .8;
+		this.CROWBOX = [30,20,75,30];
+		this.CROWTWEENCHANCES = [.5, .3, .2];
 
+	//Background stuff
 		this.SAMXRADIUS = this.game.width/2  +20;
 		this.SAMYRADIUS = this.game.height-20;
+		this.SLOWCLOUDTIME = 10000;
+		this.FASTCLOUDTIME = 3000;
 
-		this.winterDistance = 1000;
+	//Winter stuff
+		this.winterDistance = 100;//1000;
+		this.winterMax = 200;
+		this.winterPadding = 80;
 		this.winterSpeed = .5;
+		this.cautionX = 10;
 	},
 
 	create: function(){
 
 		//Set up the sun and moon (MUST be first)
 		this.setUpSAM();
+		//this.setupClouds();
+		
 		//draw the background
 		//--- Road ---
 		var graphics = this.add.graphics(0, 0);
@@ -99,6 +116,7 @@ BasicGame.Game.prototype = {
 
 		this.moleStarter();
 		this.baseballStarter();
+		this.crowStarter();
 
 		//Make the mole pop out of the ground as needed
 		if(this.moleEnemy.position.x + this.game.width - (this.toon.position.x  + this.toon.width) <= this.MOLEPOPDIST
@@ -125,15 +143,15 @@ BasicGame.Game.prototype = {
 			this.HURTTIME++;
 		}
 	},
-/*
+
 	// Comment this out when testing 'final' versions of game
 	render: function(){
 		game.debug.geom( this.toon.hitbox, 'rgba(255,0,0, .7)' ) ;
 		game.debug.geom( this.moleEnemy.hitbox, 'rgba(0,255,0, .7)' ) ;
 		game.debug.geom( this.baseball.hitbox, 'rgba(0,255,0, .7)' );
-		game.debug.geom( this.acornDisplay.cropRect, 'rgba(0,0,255,.7)');
+		game.debug.geom(this.crow.hitbox, 'rgba(0,255,0,.7)')
 	},
-*/
+
 	//----- SETUP FUNCTIONS -----
 	setupToon: function(){
 		this.toon = this.add.sprite(0,0,'Play_TA', 'Toon_Running_1');
@@ -215,7 +233,7 @@ BasicGame.Game.prototype = {
 	},
 
 	setupWinter: function(){
-		this.caution = this.add.sprite(10,this.game.height/3,'Play_TA', 'Caution');
+		this.caution = this.add.sprite(this.cautionX ,this.game.height/3,'Play_TA', 'Caution');
 		this.caution.scale.setTo(1.5,1.5);
 
 		this.cautionText = this.add.bitmapText(this.caution.position.x + this.caution.width/2,
@@ -235,6 +253,7 @@ BasicGame.Game.prototype = {
 		this.snowEmitter = this.game.add.emitter(game.world.centerX, 10, 80);
    		this.snowEmitter.makeParticles(bmd);
    		this.snowEmitter.width = 300;
+   		this.snowEmitter.gravity = 100;
    		this.snowEmitter.start(false, 1000,60);
 
    		this.winterClouds = this.add.sprite(0,0,'Play_TA', 'Winter_1');
@@ -246,6 +265,7 @@ BasicGame.Game.prototype = {
 		this.enemies = this.add.group();
 		this.setupMole();
 		this.setupBaseball();
+		this.setupCrow();
 	},
 
 	setupMole: function(){
@@ -269,7 +289,7 @@ BasicGame.Game.prototype = {
 	    this.moleMask.beginFill(0xffffff);
 	    this.moleMask.drawRect(this.mole.position.x, this.mole.position.x, this.mole.width, this.mole.height);
 	   	this.mole.mask = this.moleMask;
-*/
+		*/
 	   	//This is the way im doing it instead - manually draw the road
 	   	var graphics = this.add.graphics(0, 0);	
 		graphics.moveTo(0,this.BOTTOM+1);
@@ -297,6 +317,21 @@ BasicGame.Game.prototype = {
 		this.baseball.position.x = this.game.width + this.baseball.width + 20;
 		this.baseball.position.y = this.game.height/2+20;
 		this.baseball.isReset = true;
+	},
+
+	setupCrow: function(){
+		this.crow = this.add.sprite(0,0, 'Play_TA', 'Crow_1_1');
+		this.crow.scale.setTo(.8,.8);
+
+		this.crow.hitbox = new Phaser.Rectangle(this.crow.position.x + this.CROWBOX[0],
+									this.crow.position.y + this.CROWBOX[1],
+									this.crow.width - this.CROWBOX[2],
+									this.crow.height - this.CROWBOX[3]);
+		this.crow.animations.add('flying', Phaser.Animation.generateFrameNames('Crow_1_',1,2),2, true);
+		this.crow.animations.play('flying', 5, true);
+		this.enemies.add(this.crow);
+		this.crow.isReset = true;
+		
 	},
 
 	// ----- TOON BASED FUNCTIONS -----
@@ -328,6 +363,11 @@ BasicGame.Game.prototype = {
 			else if(this.CURSORS.right.isDown){
 				this.toon.body.velocity.x = this.TOONSPEED;
 			}
+		}
+
+		//If toon is on the ground, make toon move back with the road
+		else if(this.canJump){
+			this.toon.body.velocity.x = -120;
 		}
 	},
 
@@ -423,7 +463,6 @@ BasicGame.Game.prototype = {
 	},
 
 	updateWinter: function(){
-		if(this.winterDistance > 0){
 			this.cautionText.text = Math.floor(Math.abs(this.winterDistance)/10) + 'm';
 			var winterMod =1;
 			if(this.toon.isHyper)
@@ -432,9 +471,24 @@ BasicGame.Game.prototype = {
 				winterMod += 1.3;
 			this.winterDistance -= winterMod*.5;
 
+			if(this.winterDistance < 0){
+				this.caution.position.x = -80;
+				this.cautionText.position.x = this.caution.position.x + this.caution.width/2;
+			}
+			else{
+				this.caution.position.x = this.cautionX;
+			}
+
+			if(this.winterDistance < -1 * this.winterMax){
+				this.winterDistance = -1 * this.winterMax;
+			}
 			this.winterClouds.position.x = -1 * this.winterDistance;
 			this.snowEmitter.x = this.winterClouds.position.x - this.winterClouds.width/2;
-		}
+
+			//I decided to put game over detection here rather than in a Toon function
+			if(this.toon.hitbox.x < this.winterClouds.position.x - this.winterPadding){
+				this.gameOver();
+			}
 	},
 
 	updateScore: function(){
@@ -472,6 +526,8 @@ BasicGame.Game.prototype = {
 			this.moleEnemy.hitbox.x = this.moleEnemy.position.x + this.MOLEBOX[0] + this.game.width;
 		this.baseball.hitbox.x = this.baseball.position.x + this.BBOX[0] -  this.baseball.width/2;
 		this.baseball.hitbox.y = this.baseball.position.y + this.BBOX[1] - this.baseball.height/2;
+		this.crow.hitbox.x = this.crow.position.x + this.CROWBOX[0];
+		this.crow.hitbox.y = this.crow.position.y + this.CROWBOX[1];
 	},
 
 	checkCollisions: function(){
@@ -564,5 +620,38 @@ BasicGame.Game.prototype = {
 		this.baseball.position.x = this.game.width + this.baseball.width + 20;
 		this.baseball.isReset = true;
 	},
+
+	crowStarter: function(){
+		if(Math.random() < this.CROWCHANCE && this.crow.isReset){
+			this.crow.position.y = this.game.height/2;
+			this.crow.position.x = this.game.width + 10;
+			this.crow.moveTween = this.add.tween(this.crow).to({x: -1 * this.crow.width - 20}, 6000);
+			this.crow.moveTween.onComplete.add(this.resetCrow, this);
+			this.crow.yTween;
+			var tweenChoice = Math.random();
+			if(tweenChoice < this.CROWTWEENCHANCES[0]){
+				this.crow.yTween = this.add.tween(this.crow).to({y:[this.BOTTOM - this.crow.height - 20, 10]}, 6000);
+			}
+			else if(tweenChoice < this.CROWTWEENCHANCES[0] + this.CROWTWEENCHANCES[1]){
+				this.crow.yTween = this.add.tween(this.crow).to({y:this.crow.y}, 6000);
+			}
+			else{
+				this.crow.yTween = this.add.tween(this.crow).to({y:[this.BOTTOM - this.crow.height - 20, this.crow.y]}, 6000);
+			}
+			this.crow.moveTween.start();
+			this.crow.yTween.start();
+			this.crow.isReset = false;
+		}
+	},
+
+	resetCrow: function(){
+		this.crow.yTween.stop();
+		this.crow.moveTween.stop();
+		this.crow.isReset = true;
+	},
+
+	gameOver: function(){
+		console.log("game over");
+	}
 
 };
