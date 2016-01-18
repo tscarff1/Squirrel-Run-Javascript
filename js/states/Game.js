@@ -28,25 +28,31 @@ BasicGame.Game.prototype = {
 		this.HURTTIME = 0;
 		this.HURTTIMER = 90;
 		this.HYPERTIME = 0;
-		this.HYPERTIMER = 300
+		this.HYPERTIMER = 300;
+		this.HYPERMOVEMENT = 2;
+		this.HYPERJUMP = 1.3;
 
 	// Bonus related stuff
 		this.ACORNCHANCE = .005;
 		this.ACORNMINY = this.game.height/2;
 		this.acornsCollected = 0;
-		this.DRINKCHANCE = .99;
+		this.DRINKCHANCE = .0003;
 		this.DRINKSPEED = 5000;
 
 	//Enemy related stuff
 		this.MOLECHANCE = 0.005;
-		this.MOLEBOX = [10,20,20,10];
+		this.MOLEBOX = [15,20,30,10];
 		this.MOLEPOPDIST = 100;
 		this.BCHANCE = .002;
 		this.BBOX =[5,5,5,5];
 		this.BSPEED=7000;
-		this.CROWCHANCE = .8;
+		this.CROWCHANCE = .008;
 		this.CROWBOX = [30,20,75,30];
 		this.CROWTWEENCHANCES = [.5, .3, .2];
+		this.CROWSCALE = .7;
+		this.CARCHANCE =.05;
+		this.CARBOX = [10,80,10,0];
+		this.CARBOX1 = [10,50,20,120];
 
 	//Background stuff
 		this.SAMXRADIUS = this.game.width/2  +20;
@@ -55,7 +61,7 @@ BasicGame.Game.prototype = {
 		this.FASTCLOUDTIME = 3000;
 
 	//Winter stuff
-		this.winterDistance = 100;//1000;
+		this.winterDistance = 1000;
 		this.winterMax = 200;
 		this.winterPadding = 80;
 		this.winterSpeed = .5;
@@ -69,17 +75,7 @@ BasicGame.Game.prototype = {
 		//this.setupClouds();
 		
 		//draw the background
-		//--- Road ---
-		var graphics = this.add.graphics(0, 0);
 
-    	graphics.moveTo(0,this.ROADHEIGHT);
-	    graphics.beginFill(0x333333);
-	    graphics.lineTo(0, this.game.stage.height);
-	    graphics.lineTo(this.game.stage.width, this.game.stage.height);
-	    graphics.lineTo(this.game.stage.width, this.ROADHEIGHT);
-	    
-	    graphics.endFill();
-	    
 	    var botGraphics = this.add.graphics(0,0);
 	    botGraphics.moveTo(0, this.BOTTOM);
 	    botGraphics.lineStyle(1,0xffffff,1);
@@ -117,6 +113,7 @@ BasicGame.Game.prototype = {
 		this.moleStarter();
 		this.baseballStarter();
 		this.crowStarter();
+		this.carStarter();
 
 		//Make the mole pop out of the ground as needed
 		if(this.moleEnemy.position.x + this.game.width - (this.toon.position.x  + this.toon.width) <= this.MOLEPOPDIST
@@ -135,7 +132,7 @@ BasicGame.Game.prototype = {
 		
 
 		if(this.toon.isHurt){
-			if(this.HURTTIME > this.HURTTIMER){
+			if(this.HURTTIME > this.HURTTIMER + this.score/1000){
 				this.toon.isHurt = false;
 				this.HURTTIME = 0;
 				this.toon.animations.play('running');
@@ -143,24 +140,28 @@ BasicGame.Game.prototype = {
 			this.HURTTIME++;
 		}
 	},
-
+/*
 	// Comment this out when testing 'final' versions of game
 	render: function(){
-		game.debug.geom( this.toon.hitbox, 'rgba(255,0,0, .7)' ) ;
-		game.debug.geom( this.moleEnemy.hitbox, 'rgba(0,255,0, .7)' ) ;
-		game.debug.geom( this.baseball.hitbox, 'rgba(0,255,0, .7)' );
-		game.debug.geom(this.crow.hitbox, 'rgba(0,255,0,.7)')
+		game.debug.geom( this.toon.hitbox,     'rgba(255,0,0, .7)');
+		game.debug.geom( this.moleEnemy.hitbox,'rgba(0,255,0, .7)');
+		game.debug.geom( this.baseball.hitbox, 'rgba(0,255,0, .7)');
+		game.debug.geom( this.crow.hitbox,     'rgba(0,255,0, .7)');
+		game.debug.geom( this.car.hitbox,      'rgba(0,255,0, .7)');
+		game.debug.geom( this.car.goodbox,     'rgba(0,0,255, .7)');
 	},
-
+*/
 	//----- SETUP FUNCTIONS -----
 	setupToon: function(){
 		this.toon = this.add.sprite(0,0,'Play_TA', 'Toon_Running_1');
-		this.toon.position.setTo(50,150);
+		this.toon.position.setTo(50,250);
 		this.toon.animations.add('running', Phaser.Animation.generateFrameNames('Toon_Running_',1,3),3, true);
 		this.toon.animations.add('jumping', 'Toon_Running_1', 2, true);
+		this.toon.animations.add('riding', 'Toon_Sitting_1', 2, true);
 		this.toon.animations.play('running', 12, true);
 		this.toon.isHurt = false;
 		this.toon.isHyper = false;
+		this.toon.isRiding = false;
 	},
 
 	setupDrink: function(){
@@ -196,7 +197,7 @@ BasicGame.Game.prototype = {
 	setupDisplay: function(){
 		var panel = this.add.sprite(0,0,'UI_TA', 'panel');
 		panel.anchor.setTo(.5,.5);
-		panel.position.setTo(this.stage.width/2 - 2 * panel.width, this.game.height/10);
+		panel.position.setTo(this.stage.width/2 - 4 *  panel.width, this.game.height/10);
 		panel.scale.setTo(2.7,1.6);
 
 		var hyperPanel = this.add.sprite(220,55,'UI_TA', 'Hyper Bar Panel');
@@ -266,6 +267,7 @@ BasicGame.Game.prototype = {
 		this.setupMole();
 		this.setupBaseball();
 		this.setupCrow();
+		this.setupCar();
 	},
 
 	setupMole: function(){
@@ -321,8 +323,9 @@ BasicGame.Game.prototype = {
 
 	setupCrow: function(){
 		this.crow = this.add.sprite(0,0, 'Play_TA', 'Crow_1_1');
-		this.crow.scale.setTo(.8,.8);
-
+		this.crow.scale.setTo(this.CROWSCALE, this.CROWSCALE);
+		this.crow.position.y = this.game.height/2;
+		this.crow.position.x = this.game.width + 10;
 		this.crow.hitbox = new Phaser.Rectangle(this.crow.position.x + this.CROWBOX[0],
 									this.crow.position.y + this.CROWBOX[1],
 									this.crow.width - this.CROWBOX[2],
@@ -334,6 +337,24 @@ BasicGame.Game.prototype = {
 		
 	},
 
+	setupCar: function(){
+		this.car = this.add.sprite(-1000,0,'Play_TA', 'truck_0');
+		this.car.isReset = false;
+		this.car.animations.add('standard', Phaser.Animation.generateFrameNames('truck_',0,1),2,true);
+		this.car.animations.play('standard', 10, true);
+		this.car.scale.setTo(1.2,1.2);
+		this.car.position.y = this.BOTTOM - this.car.height;
+		this.car.hitbox = new Phaser.Rectangle(this.car.position.x + this.CARBOX[0],
+									this.car.position.y + this.CARBOX[1],
+									this.car.width - this.CARBOX[2] - this.CARBOX[0],
+									this.car.height - this.CARBOX[3] - this.CARBOX[1]);
+		this.car.goodbox = new Phaser.Rectangle(this.car.position.x + this.CARBOX1[0],
+									this.car.position.y + this.CARBOX1[1],
+									this.car.width - this.CARBOX1[2],
+									this.car.height - this.CARBOX1[3]);
+		this.enemies.add(this.car);	
+		this.car.isReset = true;
+	},
 	// ----- TOON BASED FUNCTIONS -----
 	//Called when toon collides with the ground
 	landing: function(toon, ground){
@@ -350,21 +371,37 @@ BasicGame.Game.prototype = {
 		this.toon.body.velocity.x = 0;
 		//Don't other with any input if toon is hurt
 		if(!this.toon.isHurt){
+			var hyperBonus = 1;
+			var hyperJump = 1;
+			if(this.toon.isHyper){
+				hyperBonus = this.HYPERMOVEMENT;
+				hyperJump = this.HYPERJUMP;
+			}
 			//JUMPBUTTON is defined as Space bar in preload
 			if(this.JUMPBUTTON.isDown && this.canJump){
-				this.toon.body.velocity.y = -400 //arbitrary, changed as needed
+				this.toon.body.velocity.y = -350 * hyperJump; //arbitrary, changed as needed
 				this.canJump = false;
 				this.toon.animations.stop(null, true);
 			}
 
+			//Otherwise if we are jumping, lets give some jump height control
+			else if(!this.toon.canJump && this.toon.body.velocity.y < 0 && this.JUMPBUTTON.isDown){
+				console.log('higher jump');
+				this.toon.body.velocity.y -= 5;
+			}
+
 			if(this.CURSORS.left.isDown){
-				this.toon.body.velocity.x = -1 * this.TOONSPEED;
+				this.toon.body.velocity.x = -1 * this.TOONSPEED * hyperBonus;
 			}
 			else if(this.CURSORS.right.isDown){
-				this.toon.body.velocity.x = this.TOONSPEED;
+				this.toon.body.velocity.x = this.TOONSPEED * hyperBonus;
 			}
+
+
+			
 		}
 
+		//I used canJump as an indicator of if toon is jumping. If we can jump, we aren't jumping.
 		//If toon is on the ground, make toon move back with the road
 		else if(this.canJump){
 			this.toon.body.velocity.x = -120;
@@ -424,6 +461,8 @@ BasicGame.Game.prototype = {
 		var bonusTextEffect = this.add.tween(this.bonusTextGlow.scale).to({x: 1.1, y:1.1}, 
 			400, Phaser.Easing.Linear.Out, true, 0, Number.MAX_VALUE, true);
 		bonusTextEffect.yoyo(true,0);
+		this.toon.animations.stop(null, true);
+		this.toon.animations.play('running', 18, true);
 	},
 
 	updateHyper: function(){
@@ -440,7 +479,8 @@ BasicGame.Game.prototype = {
 		this.toon.isHyper = false;
 		this.x10Text.destroy();
 		this.HYPERTIME = 0;
-		this.bonusTextGlow.destroy();
+		this.bonusTextGlow.destroy();this.toon.animations.stop(null, true);
+		this.toon.animations.play('running', 12, true);
 	},
 
 	//----- Update functions -----
@@ -528,16 +568,25 @@ BasicGame.Game.prototype = {
 		this.baseball.hitbox.y = this.baseball.position.y + this.BBOX[1] - this.baseball.height/2;
 		this.crow.hitbox.x = this.crow.position.x + this.CROWBOX[0];
 		this.crow.hitbox.y = this.crow.position.y + this.CROWBOX[1];
+	
+		this.car.hitbox.x = this.car.position.x + this.CARBOX[0];
+		this.car.goodbox.x = this.car.position.x + this.CARBOX1[0];
 	},
 
 	checkCollisions: function(){
 		//Check for enemy collisions
 		this.enemies.forEach(function(enemy){
 				if(Phaser.Rectangle.intersects(this.toon.hitbox, enemy.hitbox)){
+					//Start by performing the event specific to each enemy
 					if(enemy == this.moleEnemy)
 						this.collideMole();
 					else if(enemy == this.baseball)
 						this.collideBaseball();
+					else if(enemy == this.crow)
+						this.collideCrow();
+					else if(enemy == this.car)
+						this.collideCar();
+					//Make toon trip!
 					this.toon.animations.stop(null, true);
 					this.toon.frameName = 'Toon_Tripping';
 					this.toon.isHurt = true;
@@ -577,7 +626,7 @@ BasicGame.Game.prototype = {
 		if(Math.random() < this.MOLECHANCE && this.moleEnemy.isReset == true){
 			this.moleEnemy.isReset = false;
 			this.mole.hasHit = false;
-			this.moleEnemy.moveTween = this.add.tween(this.moleEnemy).to({x:-1 * (this.game.width + this.mole.width + 100)}, this.ROADSPEED);
+			this.moleEnemy.moveTween = this.add.tween(this.moleEnemy).to({x:-1 * (this.game.width + this.mole.width + 100)}, this.ROADSPEED -1000);
 			this.moleEnemy.moveTween.onComplete.add(this.resetMole, this);
 			this.moleEnemy.moveTween.start();
 		}
@@ -623,31 +672,77 @@ BasicGame.Game.prototype = {
 
 	crowStarter: function(){
 		if(Math.random() < this.CROWCHANCE && this.crow.isReset){
-			this.crow.position.y = this.game.height/2;
-			this.crow.position.x = this.game.width + 10;
+			
 			this.crow.moveTween = this.add.tween(this.crow).to({x: -1 * this.crow.width - 20}, 6000);
 			this.crow.moveTween.onComplete.add(this.resetCrow, this);
 			this.crow.yTween;
 			var tweenChoice = Math.random();
-			if(tweenChoice < this.CROWTWEENCHANCES[0]){
-				this.crow.yTween = this.add.tween(this.crow).to({y:[this.BOTTOM - this.crow.height - 20, 10]}, 6000);
-			}
-			else if(tweenChoice < this.CROWTWEENCHANCES[0] + this.CROWTWEENCHANCES[1]){
-				this.crow.yTween = this.add.tween(this.crow).to({y:this.crow.y}, 6000);
-			}
-			else{
-				this.crow.yTween = this.add.tween(this.crow).to({y:[this.BOTTOM - this.crow.height - 20, this.crow.y]}, 6000);
-			}
+			 if(tweenChoice < this.CROWTWEENCHANCES[0]){
+			 	this.crow.yTween = this.add.tween(this.crow).to({y:[this.BOTTOM -this.crow.height, 10]}, 6000);
+			 }
+			 else if(tweenChoice < this.CROWTWEENCHANCES[0] + this.CROWTWEENCHANCES[1]){
+			 	this.crow.yTween = this.add.tween(this.crow).to({y:this.crow.y}, 6000);
+			 }
+			 else{
+				var startY = this.crow.position.y;
+				var endY = 300;
+				this.crow.yTween = this.add.tween(this.crow).to({y:[startY - 300, startY, startY + 300, startY]},
+				 2000, Phaser.Easing.Linear.easeInOut, true, 1000, 10);
+				this.crow.yTween.interpolation(Phaser.Math.bezierInterpolation);
+			 }
 			this.crow.moveTween.start();
 			this.crow.yTween.start();
 			this.crow.isReset = false;
 		}
 	},
 
+	collideCrow: function(){
+		this.crow.moveTween.stop();
+		this.crow.yTween.stop();
+		this.crow.position.setTo(this.crow.position.x + this.crow.width/2, this.crow.position.y + this.crow.height/2);
+		this.crow.anchor.setTo(.5,.5);
+		this.crow.endTween1 = this.add.tween(this.crow).to({angle: 720}, 300);
+		this.crow.endTween2 = this.add.tween(this.crow.scale).to({x: .1, y: .1},290);
+		this.crow.endTween1.onComplete.addOnce(this.resetCrow, this);
+		this.crow.endTween2.start();
+		this.crow.endTween1.start();
+	},
+
 	resetCrow: function(){
+		this.crow.position.y = this.game.height/2;
+		this.crow.position.x = this.game.width + 10;
 		this.crow.yTween.stop();
 		this.crow.moveTween.stop();
+		this.crow.anchor.setTo(0,0);
+		this.crow.scale.setTo(this.CROWSCALE,this.CROWSCALE);
 		this.crow.isReset = true;
+	},
+
+	carStarter: function(){
+		if(Math.random() < this.CARCHANCE && this.car.isReset){
+			this.car.x = -1 * this.car.width - 20;
+			var startCar = this.add.tween(this.car).to({x: -100}, 3000, Phaser.Easing.Cubic.Out);
+			startCar.start();
+			this.car.isReset = false;
+		}
+	},
+
+	collideCar: function(){
+		var moveCar = this.add.tween(this.car).to({x: this.game.width}, 4000, Phaser.Easing.Quadratic.In);
+		moveCar.onComplete.addOnce(this.resetCar, this);
+		moveCar.start();
+		this.car.hitbox.y = this.game.height;
+		this.car.goodbox.y = this.game.height;
+	},
+
+	rideCar: function(){
+
+	},
+
+	resetCar: function(){
+		this.car.isReset = true;
+		this.car.hitbox.y = this.car.position.y + this.CARBOX[1];
+		this.car.goodbox.y = this.car.position.y + this.CARBOX1[1];
 	},
 
 	gameOver: function(){
