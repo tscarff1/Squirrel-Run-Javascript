@@ -20,6 +20,7 @@ BasicGame.Game.prototype = {
 		
 		this.CURSORS = this.game.input.keyboard.createCursorKeys();
 		this.JUMPBUTTON = this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+		this.PAUSEBUTTON = this.game.input.keyboard.addKey(Phaser.Keyboard.P);
 		
 	/* Toon stats n' stuff*/
 		this.TOONBOX = [30,30,50,40];
@@ -36,7 +37,7 @@ BasicGame.Game.prototype = {
 		this.ACORNCHANCE = .005;
 		this.ACORNMINY = this.game.height/2;
 		this.acornsCollected = 0;
-		this.DRINKCHANCE = .0003;
+		this.DRINKCHANCE = .3;
 		this.DRINKSPEED = 5000;
 
 	//Enemy related stuff
@@ -66,6 +67,17 @@ BasicGame.Game.prototype = {
 		this.winterPadding = 80;
 		this.winterSpeed = .5;
 		this.cautionX = 10;
+
+		//Sound stuff
+		this.musicEnabled = true;
+		this.soundEnabled = true;
+		this.music = this.add.audio('Game Theme');
+		this.popSound = this.add.audio('Pop');
+		//this.owSound = this.add.audio('Ow');
+		this.boingSound = this.add.audio('Boing');
+		this.slideSound = this.add.audio('Slide');
+		this.crashSound = this.add.audio('Crash');
+		this.paused = false;
 	},
 
 	create: function(){
@@ -97,51 +109,70 @@ BasicGame.Game.prototype = {
 		//Has to go last so that the display is on top
 		this.setupDisplay();
 
+		this.startGame();
+
+		this.startBtn = this.game.add.button(0,0, 'UI_TA', this.togglePause, this, 'button', 'button', 'button');
+		this.startBtn.position.x = this.game.width - this.startBtn.width - 10;
+		this.startBtn.position.y = 10;
+
+		this.startTxt = this.add.bitmapText(this.startBtn.position.x+this.startBtn.width/2 - 5, 
+			this.startBtn.position.y + this.startBtn.height/2, 'zantroke', 'PAUSE', 30);
+        this.startTxt.anchor.setTo(.5,.5);
+        this.startTxt.tint = 0xff0000;
+
+	},
+
+	startGame: function(){
+		//Sound stuff on the other hand can go whereever
+		this.music.loop = true;
+		this.music.play();
 	},
 
 	update: function(){
-		this.updateHitboxes();
+		if(!this.paused){
+			this.updateHitboxes();
 
-		this.updateScore();
-		this.updateSAM();
-		this.updateWinter();
+			this.updateScore();
+			this.updateSAM();
+			this.updateWinter();
 
-		this.physics.arcade.collide(this.toon, this.botBound, this.landing, null, this);
-		this.moveToon();
-		this.updateHyper();
+			this.physics.arcade.collide(this.toon, this.botBound, this.landing, null, this);
+			this.moveToon();
+			this.updateHyper();
 
-		this.moleStarter();
-		this.baseballStarter();
-		this.crowStarter();
-		this.carStarter();
+			this.moleStarter();
+			this.baseballStarter();
+			this.crowStarter();
+			this.carStarter();
 
-		//Make the mole pop out of the ground as needed
-		if(this.moleEnemy.position.x + this.game.width - (this.toon.position.x  + this.toon.width) <= this.MOLEPOPDIST
-		 && this.mole.position.y > this.BOTTOM - this.mole.height
-		 && !this.mole.hasHit){
-			this.mole.position.y -= 1;
-		}
-
-		this.acornSpawner();
-		this.drinkSpawner();
-		this.checkCollisions();
-
-		//----- ENEMY STUFF -----
-		if(this.baseball.position.x < this.game.width +10)
-			this.baseball.angle--;
-		
-
-		if(this.toon.isHurt){
-			if(this.HURTTIME > this.HURTTIMER + this.score/1000){
-				this.toon.isHurt = false;
-				this.HURTTIME = 0;
-				this.toon.animations.play('running');
+			//Make the mole pop out of the ground as needed
+			if(this.moleEnemy.position.x + this.game.width - (this.toon.position.x  + this.toon.width) <= this.MOLEPOPDIST
+			 && this.mole.position.y > this.BOTTOM - this.mole.height
+			 && !this.mole.hasHit){
+				this.mole.position.y -= 1;
 			}
-			this.HURTTIME++;
+
+			this.acornSpawner();
+			this.drinkSpawner();
+			this.checkCollisions();
+
+			//----- ENEMY STUFF -----
+			if(this.baseball.position.x < this.game.width +10)
+				this.baseball.angle--;
+			
+
+			if(this.toon.isHurt){
+				if(this.HURTTIME > this.HURTTIMER + this.score/1000){
+					this.toon.isHurt = false;
+					this.HURTTIME = 0;
+					this.toon.animations.play('running');
+				}
+				this.HURTTIME++;
+			}
 		}
 	},
-/*
-	// Comment this out when testing 'final' versions of game
+
+/*	// Comment this out when testing 'final' versions of game
 	render: function(){
 		game.debug.geom( this.toon.hitbox,     'rgba(255,0,0, .7)');
 		game.debug.geom( this.moleEnemy.hitbox,'rgba(0,255,0, .7)');
@@ -149,7 +180,7 @@ BasicGame.Game.prototype = {
 		game.debug.geom( this.crow.hitbox,     'rgba(0,255,0, .7)');
 		game.debug.geom( this.car.hitbox,      'rgba(0,255,0, .7)');
 		game.debug.geom( this.car.goodbox,     'rgba(0,0,255, .7)');
-	},
+	},	
 */
 	//----- SETUP FUNCTIONS -----
 	setupToon: function(){
@@ -166,7 +197,7 @@ BasicGame.Game.prototype = {
 
 	setupDrink: function(){
 		this.drink = this.add.sprite(this.game.width + 50,250,'Play_TA','EnergyDrink');
-		this.drink.hasReset = true;
+		this.drink.isReset = true;
 		this.drink.scale.setTo(.6,.6);
 		this.drink.angle = -20;
 		this.drink.anchor.setTo(.5,.5);
@@ -421,24 +452,23 @@ BasicGame.Game.prototype = {
 		acorn.scale.setTo(.75,.75);
 		var travelTime = 3000 + Math.random() * 2000;
 		//move the acorn across the stage
-		var acornTween = this.add.tween(acorn).to({x: 0, y: acorn.position.y}, travelTime);
-		acornTween.onComplete.add(function(){
+		acorn.moveTween = this.add.tween(acorn).to({x: 0, y: acorn.position.y}, travelTime);
+		acorn.moveTween.onComplete.add(function(){
 			acorn.kill();
 			this.acorns.remove(acorn);	
 		}, this);
-		acornTween.start();
+		acorn.moveTween.start();
 		this.acorns.add(acorn);
 
 	},
 
 	drinkSpawner: function(){
-		if(Math.random() < this.DRINKCHANCE && this.drink.hasReset && !this.toon.isHyper){
+		if(Math.random() < this.DRINKCHANCE && this.drink.isReset && !this.toon.isHyper){
 			this.drinktween1 = this.add.tween(this.drink).to({x: -1 * this.drink.width-20}, this.DRINKSPEED);
 			this.drinktween2 = this.add.tween(this.drinkglow).to({x: -1 * this.drink.width - 20}, this.DRINKSPEED);
 			this.drinktween1.start();
 			this.drinktween2.start();
-			this.glowtween.yoyo(true, 0);
-			this.drink.hasReset = false;
+			this.drink.isReset = false;
 			this.drinktween1.onComplete.addOnce(this.resetDrink, this);
 		}
 	},
@@ -448,7 +478,7 @@ BasicGame.Game.prototype = {
 		this.drinkglow.position.x = this.game.width + 40;
 		this.drinktween1.stop();
 		this.drinktween2.stop();
-		this.drink.hasReset = true;
+		this.drink.isReset = true;
 	},
 
 	startHyper: function(){
@@ -590,8 +620,16 @@ BasicGame.Game.prototype = {
 					this.toon.animations.stop(null, true);
 					this.toon.frameName = 'Toon_Tripping';
 					this.toon.isHurt = true;
+					//if(this.soundEnabled)
+					//	this.owSound.play();
 				}
 		}.bind(this));
+
+		//Now check to see if we collide with the car's hitbox
+		if(Phaser.Rectangle.intersects(this.toon.hitbox, this.car.goodbox)){
+			this.rideCar();
+		}
+
 
 		//check for acorn collisons
 		this.acorns.forEach(function(item){
@@ -600,6 +638,8 @@ BasicGame.Game.prototype = {
 				this.decayTime = 0;
 				item.destroy();
 				this.acornsCollected++;
+				if(this.soundEnabled)
+					this.popSound.play();
 			}
 		}.bind(this));
 
@@ -633,8 +673,10 @@ BasicGame.Game.prototype = {
 	},
 
 	collideMole: function(){
-		var dropTween = this.add.tween(this.mole).to({y:this.BOTTOM - 2 * this.dirt.height}, 300);
 		this.mole.hasHit = true;
+		if(this.soundEnabled)
+			this.slideSound.play();
+		var dropTween = this.add.tween(this.mole).to({y:this.BOTTOM - 2 * this.dirt.height}, 300);
 		dropTween.start();
 		this.moleEnemy.hitbox.x = this.game.width;
 	},
@@ -655,6 +697,10 @@ BasicGame.Game.prototype = {
 	},
 
 	collideBaseball: function(){
+		if(this.soundEnabled){
+			this.boingSound.play();
+			console.log('hit baseball');
+		}
 		this.baseball.yTween.stop();
 		this.baseball.endTween = this.add.tween(this.baseball).to({y: -50},800, Phaser.Easing.Cubic.Out);
 		this.baseball.endTween.onComplete.add(this.resetBaseball, this);
@@ -672,7 +718,7 @@ BasicGame.Game.prototype = {
 
 	crowStarter: function(){
 		if(Math.random() < this.CROWCHANCE && this.crow.isReset){
-			
+			this.crow.isReset = false;
 			this.crow.moveTween = this.add.tween(this.crow).to({x: -1 * this.crow.width - 20}, 6000);
 			this.crow.moveTween.onComplete.add(this.resetCrow, this);
 			this.crow.yTween;
@@ -692,7 +738,6 @@ BasicGame.Game.prototype = {
 			 }
 			this.crow.moveTween.start();
 			this.crow.yTween.start();
-			this.crow.isReset = false;
 		}
 	},
 
@@ -706,6 +751,9 @@ BasicGame.Game.prototype = {
 		this.crow.endTween1.onComplete.addOnce(this.resetCrow, this);
 		this.crow.endTween2.start();
 		this.crow.endTween1.start();
+
+		if(this.soundEnabled)
+			this.crashSound.play();
 	},
 
 	resetCrow: function(){
@@ -720,30 +768,203 @@ BasicGame.Game.prototype = {
 
 	carStarter: function(){
 		if(Math.random() < this.CARCHANCE && this.car.isReset){
-			this.car.x = -1 * this.car.width - 20;
-			var startCar = this.add.tween(this.car).to({x: -100}, 3000, Phaser.Easing.Cubic.Out);
-			startCar.start();
 			this.car.isReset = false;
+			this.car.x = -1 * this.car.width - 20;
+			this.car.startCar = this.add.tween(this.car).to({x: -100}, 3000, Phaser.Easing.Cubic.Out);
+			this.car.startCar.start();
+			this.car.startCar.onComplete.addOnce(this.idleCar, this);
 		}
 	},
 
+	idleCar: function(){
+		game.time.events.add(Phaser.Timer.SECOND * 7, this.moveCar, this);
+		this.car.isIdle = true;
+	},
+
+	moveCar: function(){
+		this.car.isIdle = false;
+		this.car.moveCar = this.add.tween(this.car).to({x: this.game.width}, 4000, Phaser.Easing.Quadratic.In);
+		this.car.moveCar.onComplete.addOnce(this.resetCar, this);
+		this.car.moveCar.start();
+		this.car.isMoving = true;
+	},
+
 	collideCar: function(){
-		var moveCar = this.add.tween(this.car).to({x: this.game.width}, 4000, Phaser.Easing.Quadratic.In);
-		moveCar.onComplete.addOnce(this.resetCar, this);
-		moveCar.start();
 		this.car.hitbox.y = this.game.height;
 		this.car.goodbox.y = this.game.height;
+		if(this.car.isIdle){
+			this.moveCar();
+			game.time.events.events = [];
+		}
+		else if(!this.car.isMoving){
+			this.car.startCar.stop();
+			this.moveCar();
+		}	
 	},
 
 	rideCar: function(){
-
+		this.toon.frameName='ToonSitting_1';
 	},
 
 	resetCar: function(){
-		this.car.isReset = true;
+		this.car.isMoving = false;
 		this.car.hitbox.y = this.car.position.y + this.CARBOX[1];
 		this.car.goodbox.y = this.car.position.y + this.CARBOX1[1];
+		this.car.isReset = true;
 	},
+
+	togglePause: function(btn){
+		if(this.paused){
+			this.unpauseGame();
+		}
+		else{
+			this.pauseGame();
+		}
+	},
+
+	pauseGame: function(){
+    	this.paused = true;    
+    	this.menu = this.add.sprite(this.game.width/2,this.game.height/2,'UI_TA2', 'PauseScreen');
+    	this.menu.anchor.setTo(.5,.5);
+
+    	this.pauseText = this.add.bitmapText(this.game.width/2, 90, 'zantroke', 'GAME PAUSED', 40);
+    	this.pauseText.anchor.setTo(.5,.5);
+
+    	this.musicText = this.add.bitmapText(280,170,'zantroke', 'MUSIC:', 30);
+    	this.musicText.anchor.setTo(0,.5);
+    	this.musicBox = this.add.button(450, 170, 'UI_TA2', this.toggleMusic, this, 'box','box','box');
+    	this.musicBox.anchor.setTo(.5,.5);
+    	if(this.musicEnabled){
+    		this.musicCheck = this.add.sprite(this.musicBox.position.x, this.musicBox.position.y, 'UI_TA2', 'check');
+    		this.musicCheck.anchor.setTo(.5,.5);
+    	}
+
+    	this.soundText = this.add.bitmapText(280,250,'zantroke', 'SOUND:', 30);
+    	this.soundText.anchor.setTo(0,.5);
+    	this.soundBox = this.add.button(450, 250, 'UI_TA2', this.toggleSound, this, 'box','box','box');
+    	this.soundBox.anchor.setTo(.5,.5);
+    	if(this.soundEnabled){
+    		this.soundCheck = this.add.sprite(this.soundBox.position.x, this.soundBox.position.y, 'UI_TA2', 'check');
+    		this.soundCheck.anchor.setTo(.5,.5);
+    	}
+
+    	this.pauseText2 = this.add.bitmapText(this.game.width/2, 360, 'zantroke', 'Unpause with :P: or the pause button', 18);
+    	this.pauseText2.anchor.setTo(.5,.5);
+    	this.physics.arcade.isPaused = true;
+    	this.pauseTweens();
+    	this.toggleAnimations(true);
+    },
+
+    pauseTweens: function(){
+		//Pause all acorns
+		this.acorns.forEach(function(acorn){
+			acorn.moveTween.pause();
+		}.bind(this));
+
+		//Now for the drink
+		if(!this.drink.isReset){
+			this.drinktween1.pause();
+			this.drinktween2.pause();
+			this.glowtween.pause();
+		}
+		if(!this.moleEnemy.isReset)
+			this.moleEnemy.moveTween.pause();
+		if(!this.baseball.isReset){
+			this.baseball.xTween.pause();
+			this.baseball.yTween.pause();
+		}
+		if(!this.crow.isReset){
+			this.crow.moveTween.pause();
+			this.crow.yTween.pause();
+		}
+
+		if(!this.car.isReset){
+			if(this.car.isIdle){
+				game.time.events.stop();
+			}
+		}
+    },
+
+    resumeTweens: function(){
+    	//Unpause all acorns
+		this.acorns.forEach(function(acorn){
+			acorn.moveTween.resume();
+		}.bind(this));
+    
+		//Now for the drink
+		if(!this.drink.isReset){
+			this.drinktween1.resume();
+			this.drinktween2.resume();
+			this.glowtween.resume();
+		}
+
+		if(!this.moleEnemy.isReset)
+			this.moleEnemy.moveTween.resume();
+		if(!this.baseball.isReset){
+			this.baseball.xTween.resume();
+			this.baseball.yTween.resume();
+		}
+		if(!this.crow.isReset){
+			this.crow.moveTween.resume();
+			this.crow.yTween.resume();
+		}
+
+		if(!this.car.isReset){
+			if(this.car.isIdle)
+				game.time.events.resume();
+		}
+    },
+
+    toggleAnimations: function(pause){
+
+    		this.toon.animations.paused = pause;
+    		this.car.animations.paused = pause;
+    		this.crow.animations.paused = pause;
+    },
+
+    toggleMusic: function(){
+    	this.musicEnabled = !(this.musicEnabled);
+    	if(this.musicEnabled){
+    		this.musicCheck = this.add.sprite(this.musicBox.position.x, this.musicBox.position.y, 'UI_TA2', 'check');
+    		this.musicCheck.anchor.setTo(.5,.5);
+    		this.music.play();
+    	}
+    	else{
+    		this.music.pause();
+    		this.musicCheck.destroy();
+    	}
+    },
+
+    toggleSound: function(){
+    	this.soundEnabled = !(this.soundEnabled);
+    	if(this.soundEnabled){
+    		this.soundCheck = this.add.sprite(this.soundBox.position.x, this.soundBox.position.y, 'UI_TA2', 'check');
+    		this.soundCheck.anchor.setTo(.5,.5);
+    	}
+    	else{
+    		this.soundCheck.destroy();
+    	}	
+    },
+
+    unpauseGame: function(){
+    	this.pauseText.destroy();
+    	this.menu.destroy();
+    	this.musicBox.destroy();
+    	this.musicText.destroy();
+    	this.soundBox.destroy();
+    	this.soundText.destroy();
+    	if(this.musicEnabled)
+    		this.musicCheck.destroy();
+    	if(this.soundEnabled)
+    		this.soundCheck.destroy();
+    	this.pauseText2.destroy();
+
+    	this.toggleAnimations(false);
+    	this.resumeTweens();
+
+    	this.physics.arcade.isPaused = false;
+    	this.paused = false;
+    },
 
 	gameOver: function(){
 		console.log("game over");

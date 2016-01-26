@@ -1,7 +1,7 @@
 BasicGame.MainMenu = function(game) {
 
 };
-
+//MAke sure to credit http://www.freesfx.co.uk and https://www.freesound.org
 BasicGame.MainMenu.prototype = {
 
     preload: function() {
