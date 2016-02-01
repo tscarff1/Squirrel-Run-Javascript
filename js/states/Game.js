@@ -41,9 +41,13 @@ BasicGame.Game.prototype = {
 		this.DRINKSPEED = 5000;
 
 	//Enemy related stuff
+		this.ENEMYDELAY = 200;
+		this.enemyTimer = 0;
+		this.enemySpawned = false;
 		this.MOLECHANCE = 0.005;
+		this.MOLEHEIGHT;
 		this.MOLEBOX = [15,20,30,10];
-		this.MOLEPOPDIST = 100;
+		this.MOLEPOPDIST = 150;
 		this.BCHANCE = .002;
 		this.BBOX =[5,5,5,5];
 		this.BSPEED=7000;
@@ -71,39 +75,59 @@ BasicGame.Game.prototype = {
 		//Sound stuff
 		this.musicEnabled = true;
 		this.soundEnabled = true;
-		this.music = this.add.audio('Game Theme');
+		this.music = this.add.audio('Game Theme',.9);
 		this.popSound = this.add.audio('Pop');
-		//this.owSound = this.add.audio('Ow');
+		this.owSound = this.add.audio('Ow');
+		this.yihooSound = this.add.audio('Yihoo');
 		this.boingSound = this.add.audio('Boing');
 		this.slideSound = this.add.audio('Slide');
 		this.crashSound = this.add.audio('Crash');
+		this.engineSound = this.add.audio('Engine',.7);
+		this.honkSound = this.add.audio('Honk',.7);
+		this.windSound = this.add.audio('Wind');
 		this.paused = false;
-	},
+
+		game.load.image('ground', 'assets/images/hills.png');	},
 
 	create: function(){
-
+		this.sprites = this.add.group();
 		//Set up the sun and moon (MUST be first)
 		this.setUpSAM();
-		//this.setupClouds();
+		this.setupClouds();
 		
 		//draw the background
-
+		this.hills = this.add.tileSprite(0, this.game.height/2 +100, 800, 100,'ground');
+		this.sprites.add(this.hills);
 	    var botGraphics = this.add.graphics(0,0);
 	    botGraphics.moveTo(0, this.BOTTOM);
 	    botGraphics.lineStyle(1,0xffffff,1);
 	    botGraphics.lineTo(this.game.width, this.BOTTOM);
+	  	this.botBound = this.add.sprite(0, this.BOTTOM, botGraphics.generateTexture());
 
-	    this.botBound = this.add.sprite(0, this.BOTTOM, botGraphics.generateTexture());
-		
+	  	var graphics = this.add.graphics(0, 0);	
+		graphics.moveTo(0,this.BOTTOM+1);
+	    graphics.beginFill(0x333333);
+	    graphics.lineTo(0, this.game.stage.height);
+	    graphics.lineTo(this.game.stage.width, this.game.stage.height);
+	    graphics.lineTo(this.game.stage.width, this.BOTTOM);
+	    
+	    graphics.endFill();
+	    graphics.moveTo(0,0);
+	    botGraphics.destroy();
+		this.sprites.add(this.botBound);
+		this.sprites.add(graphics);
+		this.setupTree();
+
 		this.setupToon();
 		this.setupDrink();
 		this.setupEnemies();
 		this.setupPhysics();
 		
 		//Now let's set up acorns
-		this.acorns = this.add.group();
+		this.sprites.acorns = this.add.group();
 		//That was easy!
 
+		//Must be second to last!
 		this.setupWinter();
 
 		//Has to go last so that the display is on top
@@ -130,6 +154,7 @@ BasicGame.Game.prototype = {
 
 	update: function(){
 		if(!this.paused){
+			this.hills.tilePosition.x -= .5;
 			this.updateHitboxes();
 
 			this.updateScore();
@@ -140,16 +165,23 @@ BasicGame.Game.prototype = {
 			this.moveToon();
 			this.updateHyper();
 
-			this.moleStarter();
-			this.baseballStarter();
-			this.crowStarter();
+			//this.moleStarter();
+			//this.baseballStarter();
+			//this.crowStarter();
+			this.spawnEnemies();
 			this.carStarter();
 
 			//Make the mole pop out of the ground as needed
+			
 			if(this.moleEnemy.position.x + this.game.width - (this.toon.position.x  + this.toon.width) <= this.MOLEPOPDIST
-			 && this.mole.position.y > this.BOTTOM - this.mole.height
+			 && this.mole.position.y > this.BOTTOM - this.MOLEHEIGHT
 			 && !this.mole.hasHit){
-				this.mole.position.y -= 1;
+			 	this.mole.cropRect.height += 2;
+				this.mole.position.y -= 2;
+			}
+
+			if(!this.mole.isReset){
+				this.mole.updateCrop();
 			}
 
 			this.acornSpawner();
@@ -160,6 +192,7 @@ BasicGame.Game.prototype = {
 			if(this.baseball.position.x < this.game.width +10)
 				this.baseball.angle--;
 			
+			this.updateDeer();
 
 			if(this.toon.isHurt){
 				if(this.HURTTIME > this.HURTTIMER + this.score/1000){
@@ -210,6 +243,9 @@ BasicGame.Game.prototype = {
 		this.drinkglow.angle = -20;
 		this.drinkglow.tint = 0xF2FF00
 		this.drinkglow.blendMode = PIXI.blendModes.ADD;
+
+		this.sprites.add(this.drink);
+		this.sprites.add(this.drinkglow);
 	},
 
 	setupPhysics: function(){
@@ -262,6 +298,19 @@ BasicGame.Game.prototype = {
 		this.moon = this.add.sprite(0,0, 'Play_TA', 'moon');
 		this.moon.anchor.x=.5;
 		this.samAngle = 0;
+		this.sprites.add(this.sun);
+		this.sprites.add(this.moon);
+	},
+
+	setupTree: function(){
+		var tree = this.add.sprite(this.game.width/2, this.game.height/2 - 120, 'PLAY_TA2','tree');
+		tree.cropRect = new Phaser.Rectangle(0,0,tree.width, tree.height - 34);
+		tree.updateCrop();
+		this.sprites.add(tree);
+	},
+
+	setupClouds: function(){
+
 	},
 
 	setupWinter: function(){
@@ -299,10 +348,36 @@ BasicGame.Game.prototype = {
 		this.setupBaseball();
 		this.setupCrow();
 		this.setupCar();
+		this.setupDeer();
+		this.sprites.add(this.enemies);
+	},
+
+	spawnEnemies: function(){
+		if(this.enemyTimer < this.ENEMYDELAY){
+			this.enemyTimer++;
+		}
+		else if(this.enemyTimer == this.ENEMYDELAY){
+
+			//enemySpawned is used to reduce the chance of two enemies appearing closer together
+			if(!this.enemySpawned){
+				var enemyChance = Math.random();
+				if(enemyChance < 1.0/3){
+					this.spawnMole();
+				}
+				else if(enemyChance < 2.0/3){
+					this.spawnCrow();
+				}
+				else {
+					this.spawnBaseball();
+				}
+				this.enemyTimer = 0;
+			}
+		}
 	},
 
 	setupMole: function(){
 		this.mole = this.add.sprite(this.game.width,this.BOTTOM,'Play_TA', 'MoleEnemy');
+		this.MOLEHEIGHT = this.mole.height;
 		this.dirt = this.add.sprite(this.game.width,0,'Play_TA', 'MoleDirt');
 		this.mole.position.y = this.BOTTOM - 2* 	this.dirt.height;
 		this.dirt.position.y = this.BOTTOM - this.dirt.height;
@@ -317,22 +392,10 @@ BasicGame.Game.prototype = {
 			this.MOLEBOX[1] + this.BOTTOM -this.moleEnemy.height,
 			this.moleEnemy.width - this.MOLEBOX[2], this.moleEnemy.height - this.MOLEBOX[3])
 
-		//	The way I'd like to hide the mole, but is unfortunately not working
-	    /*this.moleMask = game.add.graphics(0, 0);
-	    this.moleMask.beginFill(0xffffff);
-	    this.moleMask.drawRect(this.mole.position.x, this.mole.position.x, this.mole.width, this.mole.height);
-	   	this.mole.mask = this.moleMask;
-		*/
-	   	//This is the way im doing it instead - manually draw the road
-	   	var graphics = this.add.graphics(0, 0);	
-		graphics.moveTo(0,this.BOTTOM+1);
-	    graphics.beginFill(0x333333);
-	    graphics.lineTo(0, this.game.stage.height);
-	    graphics.lineTo(this.game.stage.width, this.game.stage.height);
-	    graphics.lineTo(this.game.stage.width, this.BOTTOM);
-	    
-	    graphics.endFill();
-	    graphics.moveTo(0,0);
+		
+		this.mole.cropRect = new Phaser.Rectangle(0,0,this.mole.width, 0);
+		this.mole.updateCrop();
+	   
 
 	},
 
@@ -365,7 +428,6 @@ BasicGame.Game.prototype = {
 		this.crow.animations.play('flying', 5, true);
 		this.enemies.add(this.crow);
 		this.crow.isReset = true;
-		
 	},
 
 	setupCar: function(){
@@ -385,6 +447,23 @@ BasicGame.Game.prototype = {
 									this.car.height - this.CARBOX1[3]);
 		this.enemies.add(this.car);	
 		this.car.isReset = true;
+	},
+
+	setupDeer: function(){
+		this.deer = this.add.sprite(this.game.width/2,this.game.height/2 + 100, 'PLAY_TA2', 'deer_0');
+		this.deer.scale.setTo(.6,.6);
+		this.deer.anchor.setTo(.5,0);
+		this.deersign = this.add.sprite(0,0,'PLAY_TA2','deer_sign');
+
+		this.deer.animations.add('running', Phaser.Animation.generateFrameNames('deer_', 0,1), 2, true);
+		this.deer.animations.play('running', 10, true);
+
+		this.deer.scaleTween = this.add.tween(this.deer.scale).to({x:.1,y:.1}, 1500);
+		this.deer.moveTween = this.add.tween(this.deer.position).to({y: this.BOTTOM - 50}, 1500);
+		this.deer.moveTween.start();
+		this.deer.scaleTween.start();
+		this.deer.zPos = 3;
+		this.sprites.add(this.deer);
 	},
 	// ----- TOON BASED FUNCTIONS -----
 	//Called when toon collides with the ground
@@ -417,7 +496,6 @@ BasicGame.Game.prototype = {
 
 			//Otherwise if we are jumping, lets give some jump height control
 			else if(!this.toon.canJump && this.toon.body.velocity.y < 0 && this.JUMPBUTTON.isDown){
-				console.log('higher jump');
 				this.toon.body.velocity.y -= 5;
 			}
 
@@ -455,10 +533,10 @@ BasicGame.Game.prototype = {
 		acorn.moveTween = this.add.tween(acorn).to({x: 0, y: acorn.position.y}, travelTime);
 		acorn.moveTween.onComplete.add(function(){
 			acorn.kill();
-			this.acorns.remove(acorn);	
+			this.sprites.acorns.remove(acorn);	
 		}, this);
 		acorn.moveTween.start();
-		this.acorns.add(acorn);
+		this.sprites.acorns.add(acorn);
 
 	},
 
@@ -482,6 +560,8 @@ BasicGame.Game.prototype = {
 	},
 
 	startHyper: function(){
+		if(this.soundEnabled)
+			this.yihooSound.play();
 		this.toon.isHyper = true;
 		this.x10Text = this.add.sprite(this.game.width/2,130, 'UI_TA', 'x10 text');
 		this.x10Text.anchor.setTo(.5,.5);
@@ -542,8 +622,11 @@ BasicGame.Game.prototype = {
 			this.winterDistance -= winterMod*.5;
 
 			if(this.winterDistance < 0){
-				this.caution.position.x = -80;
-				this.cautionText.position.x = this.caution.position.x + this.caution.width/2;
+				if(this.caution.position.x > -80){
+					this.caution.position.x = -80;
+					this.cautionText.position.x = this.caution.position.x + this.caution.width/2;
+					this.windSound.play();
+				}
 			}
 			else{
 				this.caution.position.x = this.cautionX;
@@ -632,7 +715,7 @@ BasicGame.Game.prototype = {
 
 
 		//check for acorn collisons
-		this.acorns.forEach(function(item){
+		this.sprites.acorns.forEach(function(item){
 			if(Phaser.Rectangle.intersects(this.toon.hitbox, item)){
 				this.scoreMult++;
 				this.decayTime = 0;
@@ -658,13 +741,22 @@ BasicGame.Game.prototype = {
 		this.moleEnemy.position.x = 0;
 		this.mole.position.y = this.BOTTOM - 2* this.dirt.height;
 		this.moleEnemy.isReset = true;
-		//this.moleCrop.height = 0;
+		this.mole.cropRect.height = 0;
 		
 	},
 
 	moleStarter:function(){
 		if(Math.random() < this.MOLECHANCE && this.moleEnemy.isReset == true){
+			this.spawnMole();
+		}
+	},
+
+	spawnMole: function(){
+		if(this.moleEnemy.isReset){
 			this.moleEnemy.isReset = false;
+			this.mole.y = this.BOTTOM;
+			this.mole.cropRect.height = 0;
+			this.mole.updateCrop();
 			this.mole.hasHit = false;
 			this.moleEnemy.moveTween = this.add.tween(this.moleEnemy).to({x:-1 * (this.game.width + this.mole.width + 100)}, this.ROADSPEED -1000);
 			this.moleEnemy.moveTween.onComplete.add(this.resetMole, this);
@@ -677,12 +769,20 @@ BasicGame.Game.prototype = {
 		if(this.soundEnabled)
 			this.slideSound.play();
 		var dropTween = this.add.tween(this.mole).to({y:this.BOTTOM - 2 * this.dirt.height}, 300);
+		var dropTween2 = this.add.tween(this.mole.cropRect).to({height: 0}, 300);
 		dropTween.start();
+		dropTween2.start();
 		this.moleEnemy.hitbox.x = this.game.width;
 	},
 
 	baseballStarter: function(){
 		if(Math.random() < this.BCHANCE && this.baseball.isReset == true){
+			this.spawnBaseball();
+		}
+	},
+
+	spawnBaseball: function(){
+		if(this.baseball.isReset){
 			this.baseball.isReset = false;
 
 			this.baseball.moveTime = this.BSPEED + Math.floor(Math.random() * 400)-200;
@@ -699,7 +799,6 @@ BasicGame.Game.prototype = {
 	collideBaseball: function(){
 		if(this.soundEnabled){
 			this.boingSound.play();
-			console.log('hit baseball');
 		}
 		this.baseball.yTween.stop();
 		this.baseball.endTween = this.add.tween(this.baseball).to({y: -50},800, Phaser.Easing.Cubic.Out);
@@ -718,6 +817,12 @@ BasicGame.Game.prototype = {
 
 	crowStarter: function(){
 		if(Math.random() < this.CROWCHANCE && this.crow.isReset){
+			this.spawnCrow();
+		}
+	},
+
+	spawnCrow: function(){
+		if(this.crow.isReset){
 			this.crow.isReset = false;
 			this.crow.moveTween = this.add.tween(this.crow).to({x: -1 * this.crow.width - 20}, 6000);
 			this.crow.moveTween.onComplete.add(this.resetCrow, this);
@@ -769,10 +874,12 @@ BasicGame.Game.prototype = {
 	carStarter: function(){
 		if(Math.random() < this.CARCHANCE && this.car.isReset){
 			this.car.isReset = false;
-			this.car.x = -1 * this.car.width - 20;
-			this.car.startCar = this.add.tween(this.car).to({x: -100}, 3000, Phaser.Easing.Cubic.Out);
+			this.car.x = -1 * this.car.width - 120;
+			this.car.startCar = this.add.tween(this.car).to({x: -100}, 3800, Phaser.Easing.Cubic.Out);
 			this.car.startCar.start();
 			this.car.startCar.onComplete.addOnce(this.idleCar, this);
+			if(this.soundEnabled)
+				this.honkSound.play();
 		}
 	},
 
@@ -786,10 +893,13 @@ BasicGame.Game.prototype = {
 		this.car.moveCar = this.add.tween(this.car).to({x: this.game.width}, 4000, Phaser.Easing.Quadratic.In);
 		this.car.moveCar.onComplete.addOnce(this.resetCar, this);
 		this.car.moveCar.start();
+		if(this.soundEnabled && this.car.hitbox.y < this.game.height)
+			this.engineSound.play();
 		this.car.isMoving = true;
 	},
 
 	collideCar: function(){
+		this.owSound.play();
 		this.car.hitbox.y = this.game.height;
 		this.car.goodbox.y = this.game.height;
 		if(this.car.isIdle){
@@ -811,6 +921,33 @@ BasicGame.Game.prototype = {
 		this.car.hitbox.y = this.car.position.y + this.CARBOX[1];
 		this.car.goodbox.y = this.car.position.y + this.CARBOX1[1];
 		this.car.isReset = true;
+	},
+
+	updateDeer: function(){
+		if(!this.deer.isReset){
+			if(this.deer.scale.x < .5 && this.deer.zPos == 3){
+				this.sprites.moveDown(this.deer);
+				this.deer.zPos--;
+			}
+			else if(this.deer.scale.x < .4 && this.deer.zPos ==2){
+				this.deer.zPos--;
+				this.sprites.moveDown(this.deer);
+			}
+			else if(this.deer.scale.x < .32 && this.deer.zPos == 1){
+				this.sprites.moveDown(this.deer);
+				this.deer.zPos--;
+			}
+			else if(this.deer.scale.x <= .1){
+				this.resetDeer();
+			}
+		}
+	},
+
+	resetDeer: function(){
+		this.deer.zPos = 3;
+		this.deer.scale.setTo(.6,.6);
+		this.deer.position.y = this.game.height + 20;
+		this.deer.animations.stop();
 	},
 
 	togglePause: function(btn){
@@ -857,7 +994,7 @@ BasicGame.Game.prototype = {
 
     pauseTweens: function(){
 		//Pause all acorns
-		this.acorns.forEach(function(acorn){
+		this.sprites.acorns.forEach(function(acorn){
 			acorn.moveTween.pause();
 		}.bind(this));
 
@@ -887,7 +1024,7 @@ BasicGame.Game.prototype = {
 
     resumeTweens: function(){
     	//Unpause all acorns
-		this.acorns.forEach(function(acorn){
+		this.sprites.acorns.forEach(function(acorn){
 			acorn.moveTween.resume();
 		}.bind(this));
     
