@@ -41,6 +41,8 @@ BasicGame.Preloader.prototype = {
         game.load.audio('Honk', 'assets/audio/honk.mp3', 'assets/audio/honk.ogg');
         game.load.audio('Wind', 'assets/audio/wind.mp3', 'assets/audio/wind.ogg');
         game.load.audio('Yihoo', 'assets/audio/yihoo.mp3', 'assets/audio/yihoo.ogg');
+        game.load.audio('Clipclop', 'assets/audio/clipclop.mp3', 'assets/audio/clipclop.ogg');
+        game.load.audio('Gong', 'assets/audio/gong.mp3', 'assets/audio/gong.ogg');
         //Without this there will be a delay in-game before the music starts
         this.music = this.add.audio('Game Theme');
     },

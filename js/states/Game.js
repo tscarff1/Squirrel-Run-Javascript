@@ -48,16 +48,24 @@ BasicGame.Game.prototype = {
 		this.MOLEHEIGHT;
 		this.MOLEBOX = [15,20,30,10];
 		this.MOLEPOPDIST = 150;
+		
 		this.BCHANCE = .002;
 		this.BBOX =[5,5,5,5];
 		this.BSPEED=7000;
+		
 		this.CROWCHANCE = .008;
 		this.CROWBOX = [30,20,75,30];
 		this.CROWTWEENCHANCES = [.5, .3, .2];
 		this.CROWSCALE = .7;
+		
 		this.CARCHANCE =.05;
 		this.CARBOX = [10,80,10,0];
 		this.CARBOX1 = [10,50,20,120];
+		this.IDLETIMER = 7 * Phaser.Timer.SECOND;
+		this.idleTime = 0;
+
+		this.DEERCHANCE = .003;
+		this.DEERBOX = [10,10,10,10];
 
 	//Background stuff
 		this.SAMXRADIUS = this.game.width/2  +20;
@@ -84,7 +92,10 @@ BasicGame.Game.prototype = {
 		this.crashSound = this.add.audio('Crash');
 		this.engineSound = this.add.audio('Engine',.7);
 		this.honkSound = this.add.audio('Honk',.7);
+		this.clipclopSound = this.add.audio('Clipclop');
+		this.gongSound = this.add.audio('Gong');
 		this.windSound = this.add.audio('Wind');
+		this.windSound.loop = true;
 		this.paused = false;
 
 		game.load.image('ground', 'assets/images/hills.png');	},
@@ -144,6 +155,12 @@ BasicGame.Game.prototype = {
         this.startTxt.anchor.setTo(.5,.5);
         this.startTxt.tint = 0xff0000;
 
+        //Rearrance the sprites order
+        this.sprites.setChildIndex(this.drinkGroup, 9);
+        this.sprites.setChildIndex(this.deer, 8);
+        this.sprites.setChildIndex(this.toon, 7);
+        this.sprites.setChildIndex(this.enemies, 6);
+        this.sprites.setChildIndex(this.tree, 5);
 	},
 
 	startGame: function(){
@@ -170,9 +187,10 @@ BasicGame.Game.prototype = {
 			//this.crowStarter();
 			this.spawnEnemies();
 			this.carStarter();
-
-			//Make the mole pop out of the ground as needed
+			this.updateCar();
+			this.deerStarter();
 			
+			//Make the mole pop out of the ground as needed
 			if(this.moleEnemy.position.x + this.game.width - (this.toon.position.x  + this.toon.width) <= this.MOLEPOPDIST
 			 && this.mole.position.y > this.BOTTOM - this.MOLEHEIGHT
 			 && !this.mole.hasHit){
@@ -203,9 +221,11 @@ BasicGame.Game.prototype = {
 				this.HURTTIME++;
 			}
 		}
-	},
 
-/*	// Comment this out when testing 'final' versions of game
+		this.pauseListener();
+	},
+/*
+	// Comment this out when testing 'final' versions of game
 	render: function(){
 		game.debug.geom( this.toon.hitbox,     'rgba(255,0,0, .7)');
 		game.debug.geom( this.moleEnemy.hitbox,'rgba(0,255,0, .7)');
@@ -213,6 +233,7 @@ BasicGame.Game.prototype = {
 		game.debug.geom( this.crow.hitbox,     'rgba(0,255,0, .7)');
 		game.debug.geom( this.car.hitbox,      'rgba(0,255,0, .7)');
 		game.debug.geom( this.car.goodbox,     'rgba(0,0,255, .7)');
+		game.debug.geom( this.deer.hitbox,     'rgba(0,255,0, .7)');
 	},	
 */
 	//----- SETUP FUNCTIONS -----
@@ -226,6 +247,7 @@ BasicGame.Game.prototype = {
 		this.toon.isHurt = false;
 		this.toon.isHyper = false;
 		this.toon.isRiding = false;
+		this.sprites.add(this.toon);
 	},
 
 	setupDrink: function(){
@@ -243,9 +265,10 @@ BasicGame.Game.prototype = {
 		this.drinkglow.angle = -20;
 		this.drinkglow.tint = 0xF2FF00
 		this.drinkglow.blendMode = PIXI.blendModes.ADD;
-
-		this.sprites.add(this.drink);
-		this.sprites.add(this.drinkglow);
+		this.drinkGroup = this.add.group();
+		this.drinkGroup.add(this.drink);
+		this.drinkGroup.add(this.drinkglow);
+		this.sprites.add(this.drinkGroup);
 	},
 
 	setupPhysics: function(){
@@ -303,10 +326,10 @@ BasicGame.Game.prototype = {
 	},
 
 	setupTree: function(){
-		var tree = this.add.sprite(this.game.width/2, this.game.height/2 - 120, 'PLAY_TA2','tree');
-		tree.cropRect = new Phaser.Rectangle(0,0,tree.width, tree.height - 34);
-		tree.updateCrop();
-		this.sprites.add(tree);
+		this.tree = this.add.sprite(this.game.width/2, this.game.height/2 - 120, 'PLAY_TA2','tree');
+		this.tree.cropRect = new Phaser.Rectangle(0,0,this.tree.width, this.tree.height - 34);
+		this.tree.updateCrop();
+		this.sprites.add(this.tree);
 	},
 
 	setupClouds: function(){
@@ -453,17 +476,14 @@ BasicGame.Game.prototype = {
 		this.deer = this.add.sprite(this.game.width/2,this.game.height/2 + 100, 'PLAY_TA2', 'deer_0');
 		this.deer.scale.setTo(.6,.6);
 		this.deer.anchor.setTo(.5,0);
-		this.deersign = this.add.sprite(0,0,'PLAY_TA2','deer_sign');
+		this.deer.position.y = this.game.height + 20;
+		this.deer.hitbox = new Phaser.Rectangle(this.deer.position.x - this.deer.width/2 + this.DEERBOX[0],
+									this.deer.position.y+ this.DEERBOX[1],
+									this.deer.width - this.DEERBOX[2],
+									this.deer.height - this.DEERBOX[3]);
 
-		this.deer.animations.add('running', Phaser.Animation.generateFrameNames('deer_', 0,1), 2, true);
-		this.deer.animations.play('running', 10, true);
-
-		this.deer.scaleTween = this.add.tween(this.deer.scale).to({x:.1,y:.1}, 1500);
-		this.deer.moveTween = this.add.tween(this.deer.position).to({y: this.BOTTOM - 50}, 1500);
-		this.deer.moveTween.start();
-		this.deer.scaleTween.start();
-		this.deer.zPos = 3;
 		this.sprites.add(this.deer);
+		this.deer.isReset = true;
 	},
 	// ----- TOON BASED FUNCTIONS -----
 	//Called when toon collides with the ground
@@ -713,7 +733,21 @@ BasicGame.Game.prototype = {
 			this.rideCar();
 		}
 
+		//Also have to manually check for deer
+		if(Phaser.Rectangle.intersects(this.toon.hitbox, this.deer.hitbox) && this.deer.zPos > 1){
+			//Make toon trip!
+			this.toon.animations.stop(null, true);
+			this.toon.frameName = 'Toon_Tripping';
+			this.toon.isHurt = true;
 
+			if(this.soundEnabled)
+				this.gongSound.play();
+		}
+
+		this.checkBonusCollisions();
+	},
+
+	checkBonusCollisions: function(){
 		//check for acorn collisons
 		this.sprites.acorns.forEach(function(item){
 			if(Phaser.Rectangle.intersects(this.toon.hitbox, item)){
@@ -884,8 +918,18 @@ BasicGame.Game.prototype = {
 	},
 
 	idleCar: function(){
-		game.time.events.add(Phaser.Timer.SECOND * 7, this.moveCar, this);
 		this.car.isIdle = true;
+	},
+
+	updateCar: function(){
+		if(this.car.isIdle){
+			if(this.idleTime < this.IDLETIMER){
+				this.idleTime++;
+			}
+			else if(this.idleTime == this.IDLETIMER){
+
+			}
+		}
 	},
 
 	moveCar: function(){
@@ -923,18 +967,64 @@ BasicGame.Game.prototype = {
 		this.car.isReset = true;
 	},
 
+	deerStarter: function(){
+		if(Math.random() < this.DEERCHANCE && this.deer.isReset){
+
+			this.deer.isReset = false;
+			this.deer.isStarting = true;
+			if(this.soundEnabled)
+				this.clipclopSound.play();
+			
+			this.deer.position.x =  150 + Math.random() * (game.width-200);
+
+			this.deer.animations.add('running', Phaser.Animation.generateFrameNames('deer_', 0,1), 2, true);
+			this.deer.animations.play('running', 10, true);
+
+
+			this.deersign = this.add.sprite(this.deer.position.x,this.game.height/2,'PLAY_TA2','deer_sign');
+			this.deersign.anchor.setTo(.5,0);
+			var flashSign = this.add.tween(this.deersign).to({alpha:0,},
+			 100, Phaser.Easing.Exponential.Out, true, 1000, -1,true);
+			flashSign.repeatDelay(1000);
+			
+			this.deer.startTween = this.add.tween(this.deer.position).to({y: this.game.height/2 + 100}, 1500);
+			this.deer.startTween.onComplete.add(this.moveDeer, this);
+			this.deer.startTween.start();
+		}
+	},
+
+	moveDeer: function(){
+			this.deer.isStarting = false;
+			this.deer.isMoving = true;
+			this.deer.scaleTween = this.add.tween(this.deer.scale).to({x:.1,y:.1}, 1500);
+			this.deer.moveTween = this.add.tween(this.deer.position).to({y: this.BOTTOM - 50}, 1500,Phaser.Easing.Cubic.In);
+			this.deer.moveTween.start();
+			this.deer.scaleTween.start();
+			this.deer.zPos = 3;
+	},
+
 	updateDeer: function(){
+		if(this.deer.isMoving){
+			this.deer.hitbox.x = this.deer.x - this.deer.width/2 + this.DEERBOX[0];
+			this.deer.hitbox.y = this.deer.y+ this.DEERBOX[1];
+			this.deer.hitbox.width = this.deer.width - this.DEERBOX[2] - this.DEERBOX[0];
+		}
+		else{
+			this.deer.hitbox.y = -1000;
+		}
+
+
 		if(!this.deer.isReset){
 			if(this.deer.scale.x < .5 && this.deer.zPos == 3){
-				this.sprites.moveDown(this.deer);
+				this.sprites.swap(this.deer, this.toon);
 				this.deer.zPos--;
 			}
 			else if(this.deer.scale.x < .4 && this.deer.zPos ==2){
 				this.deer.zPos--;
-				this.sprites.moveDown(this.deer);
+				this.sprites.swap(this.deer, this.enemies);
 			}
-			else if(this.deer.scale.x < .32 && this.deer.zPos == 1){
-				this.sprites.moveDown(this.deer);
+			else if(this.deer.scale.x < .25 && this.deer.zPos == 1){
+				this.sprites.swap(this.deer, this.tree);
 				this.deer.zPos--;
 			}
 			else if(this.deer.scale.x <= .1){
@@ -944,10 +1034,25 @@ BasicGame.Game.prototype = {
 	},
 
 	resetDeer: function(){
+		this.deer.isMoving = false;
 		this.deer.zPos = 3;
 		this.deer.scale.setTo(.6,.6);
 		this.deer.position.y = this.game.height + 20;
 		this.deer.animations.stop();
+		this.sprites.setChildIndex(this.deer, 8);
+		this.deer.isReset = true;
+		this.deersign.destroy();
+	},
+
+	pauseListener: function(){
+		if(this.PAUSEBUTTON.isDown && this.PAUSEBUTTON.canPress){
+			this.togglePause();
+			this.PAUSEBUTTON.canPress = false;
+		}
+
+		if(this.PAUSEBUTTON.isUp){
+			this.PAUSEBUTTON.canPress = true;
+		}
 	},
 
 	togglePause: function(btn){
@@ -961,31 +1066,31 @@ BasicGame.Game.prototype = {
 
 	pauseGame: function(){
     	this.paused = true;    
-    	this.menu = this.add.sprite(this.game.width/2,this.game.height/2,'UI_TA2', 'PauseScreen');
+    	this.menu = this.add.sprite(this.game.width/2,this.game.height/2+30,'UI_TA2', 'PauseScreen');
     	this.menu.anchor.setTo(.5,.5);
 
-    	this.pauseText = this.add.bitmapText(this.game.width/2, 90, 'zantroke', 'GAME PAUSED', 40);
+    	this.pauseText = this.add.bitmapText(this.game.width/2, 120, 'zantroke', 'GAME PAUSED', 40);
     	this.pauseText.anchor.setTo(.5,.5);
 
-    	this.musicText = this.add.bitmapText(280,170,'zantroke', 'MUSIC:', 30);
+    	this.musicText = this.add.bitmapText(280,200,'zantroke', 'MUSIC:', 30);
     	this.musicText.anchor.setTo(0,.5);
-    	this.musicBox = this.add.button(450, 170, 'UI_TA2', this.toggleMusic, this, 'box','box','box');
+    	this.musicBox = this.add.button(450, 200, 'UI_TA2', this.toggleMusic, this, 'box','box','box');
     	this.musicBox.anchor.setTo(.5,.5);
     	if(this.musicEnabled){
     		this.musicCheck = this.add.sprite(this.musicBox.position.x, this.musicBox.position.y, 'UI_TA2', 'check');
     		this.musicCheck.anchor.setTo(.5,.5);
     	}
 
-    	this.soundText = this.add.bitmapText(280,250,'zantroke', 'SOUND:', 30);
+    	this.soundText = this.add.bitmapText(280,280,'zantroke', 'SOUND:', 30);
     	this.soundText.anchor.setTo(0,.5);
-    	this.soundBox = this.add.button(450, 250, 'UI_TA2', this.toggleSound, this, 'box','box','box');
+    	this.soundBox = this.add.button(450, 280, 'UI_TA2', this.toggleSound, this, 'box','box','box');
     	this.soundBox.anchor.setTo(.5,.5);
     	if(this.soundEnabled){
     		this.soundCheck = this.add.sprite(this.soundBox.position.x, this.soundBox.position.y, 'UI_TA2', 'check');
     		this.soundCheck.anchor.setTo(.5,.5);
     	}
 
-    	this.pauseText2 = this.add.bitmapText(this.game.width/2, 360, 'zantroke', 'Unpause with :P: or the pause button', 18);
+    	this.pauseText2 = this.add.bitmapText(this.game.width/2, 390, 'zantroke', 'Unpause with :P: or the pause button', 18);
     	this.pauseText2.anchor.setTo(.5,.5);
     	this.physics.arcade.isPaused = true;
     	this.pauseTweens();
@@ -1013,6 +1118,16 @@ BasicGame.Game.prototype = {
 		if(!this.crow.isReset){
 			this.crow.moveTween.pause();
 			this.crow.yTween.pause();
+		}
+
+		if(!this.deer.isReset){
+			if(this.deer.isStarting){
+				this.deer.startTween.pause();
+			}
+			else if(this.deer.isMoving){
+				this.deer.moveTween.pause();
+				this.deer.scaleTween.pause();
+			}
 		}
 
 		if(!this.car.isReset){
@@ -1050,6 +1165,15 @@ BasicGame.Game.prototype = {
 			if(this.car.isIdle)
 				game.time.events.resume();
 		}
+		if(!this.deer.isReset){
+			if(this.deer.isStarting){
+				this.deer.startTween.resume();
+			}
+			else if(this.deer.isMoving){
+				this.deer.moveTween.resume();
+				this.deer.scaleTween.resume();
+			}
+		}
     },
 
     toggleAnimations: function(pause){
@@ -1057,6 +1181,7 @@ BasicGame.Game.prototype = {
     		this.toon.animations.paused = pause;
     		this.car.animations.paused = pause;
     		this.crow.animations.paused = pause;
+    		this.deer.animations.paused = pause;
     },
 
     toggleMusic: function(){
