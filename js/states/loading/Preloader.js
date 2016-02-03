@@ -43,6 +43,7 @@ BasicGame.Preloader.prototype = {
         game.load.audio('Yihoo', 'assets/audio/yihoo.mp3', 'assets/audio/yihoo.ogg');
         game.load.audio('Clipclop', 'assets/audio/clipclop.mp3', 'assets/audio/clipclop.ogg');
         game.load.audio('Gong', 'assets/audio/gong.mp3', 'assets/audio/gong.ogg');
+        game.load.audio('GameOver Theme', 'assets/audio/GameOverTheme.mp3', 'assets/audio/GameOverTheme.ogg');
         //Without this there will be a delay in-game before the music starts
         this.music = this.add.audio('Game Theme');
     },

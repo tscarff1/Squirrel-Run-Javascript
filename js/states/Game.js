@@ -79,7 +79,7 @@ BasicGame.Game.prototype = {
 		this.TREETIMER = this.TREEDELAY[0] + (Math.random() * this.TREEDELAY[1]);
 
 	//Winter stuff
-		this.winterDistance = 1000;
+		this.winterDistance = 0;
 		this.winterMax = 200;
 		this.winterPadding = 80;
 		this.winterSpeed = .5;
@@ -98,7 +98,7 @@ BasicGame.Game.prototype = {
 		this.engineSound = this.add.audio('Engine',.7);
 		this.honkSound = this.add.audio('Honk',.7);
 		this.clipclopSound = this.add.audio('Clipclop');
-		this.gongSound = this.add.audio('Gong');
+		this.gongSound = this.add.audio('Gong', .7);
 		this.windSound = this.add.audio('Wind');
 		this.windSound.loop = true;
 		this.paused = false;
@@ -1354,7 +1354,16 @@ BasicGame.Game.prototype = {
     },
 
 	gameOver: function(){
-		console.log("game over");
-	}
+		BasicGame.score = this.score;
+		if(this.musicEnabled)
+			this.music.stop();
+		if(this.soundEnabled){
+			this.windSound.stop();
+			if(!this.deer.isReset)
+				this.clipclopSound.stop();
+		}
+		this.state.start('GameOver');
+	},
+
 
 };
