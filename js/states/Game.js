@@ -14,7 +14,7 @@ BasicGame.Game.prototype = {
 		this.decayTime = 0;
 		
 	/* Road related stuff */
-		this.ROADSPEED = 8000;
+		this.ROADSPEED = 7000;
 		this.ROADHEIGHT = 3*this.game.height/5;
 		this.BOTTOM = 7*this.game.height/8;
 		
@@ -34,10 +34,10 @@ BasicGame.Game.prototype = {
 		this.HYPERJUMP = 1.3;
 
 	// Bonus related stuff
-		this.ACORNCHANCE = .005;
+		this.ACORNCHANCE = .007;
 		this.ACORNMINY = this.game.height/2;
 		this.acornsCollected = 0;
-		this.DRINKCHANCE = .3;
+		this.DRINKCHANCE = .0002;
 		this.DRINKSPEED = 5000;
 
 	//Enemy related stuff
@@ -70,8 +70,13 @@ BasicGame.Game.prototype = {
 	//Background stuff
 		this.SAMXRADIUS = this.game.width/2  +20;
 		this.SAMYRADIUS = this.game.height-20;
-		this.SLOWCLOUDTIME = 10000;
-		this.FASTCLOUDTIME = 3000;
+		this.CLOUDSPEED = [17000,6000];
+		this.CLOUDDELAY = [200,60];
+		this.cloudTime = 0;
+		this.CLOUDTIMER = this.CLOUDDELAY[0] + (Math.random() * this.CLOUDDELAY[1]);
+		this.TREEDELAY = [60, 50];
+		this.treeTime = 0;
+		this.TREETIMER = this.TREEDELAY[0] + (Math.random() * this.TREEDELAY[1]);
 
 	//Winter stuff
 		this.winterDistance = 1000;
@@ -98,6 +103,8 @@ BasicGame.Game.prototype = {
 		this.windSound.loop = true;
 		this.paused = false;
 
+		this.ROADACC = .01;
+
 		game.load.image('ground', 'assets/images/hills.png');	},
 
 	create: function(){
@@ -105,7 +112,8 @@ BasicGame.Game.prototype = {
 		//Set up the sun and moon (MUST be first)
 		this.setUpSAM();
 		this.setupClouds();
-		
+		this.initClouds();
+
 		//draw the background
 		this.hills = this.add.tileSprite(0, this.game.height/2 +100, 800, 100,'ground');
 		this.sprites.add(this.hills);
@@ -127,7 +135,11 @@ BasicGame.Game.prototype = {
 	    botGraphics.destroy();
 		this.sprites.add(this.botBound);
 		this.sprites.add(graphics);
-		this.setupTree();
+
+		//Set up for trees
+		this.trees = this.add.group();
+		this.sprites.add(this.trees);
+		this.initTrees();
 
 		this.setupToon();
 		this.setupDrink();
@@ -160,7 +172,7 @@ BasicGame.Game.prototype = {
         this.sprites.setChildIndex(this.deer, 8);
         this.sprites.setChildIndex(this.toon, 7);
         this.sprites.setChildIndex(this.enemies, 6);
-        this.sprites.setChildIndex(this.tree, 5);
+        this.sprites.setChildIndex(this.trees, 5);
 	},
 
 	startGame: function(){
@@ -176,7 +188,9 @@ BasicGame.Game.prototype = {
 
 			this.updateScore();
 			this.updateSAM();
+			this.cloudSpawner();
 			this.updateWinter();
+			this.treeSpawner();
 
 			this.physics.arcade.collide(this.toon, this.botBound, this.landing, null, this);
 			this.moveToon();
@@ -213,7 +227,7 @@ BasicGame.Game.prototype = {
 			this.updateDeer();
 
 			if(this.toon.isHurt){
-				if(this.HURTTIME > this.HURTTIMER + this.score/1000){
+				if(this.HURTTIME > this.HURTTIMER ){
 					this.toon.isHurt = false;
 					this.HURTTIME = 0;
 					this.toon.animations.play('running');
@@ -321,19 +335,62 @@ BasicGame.Game.prototype = {
 		this.moon = this.add.sprite(0,0, 'Play_TA', 'moon');
 		this.moon.anchor.x=.5;
 		this.samAngle = 0;
-		this.sprites.add(this.sun);
-		this.sprites.add(this.moon);
+		this.sam = this.add.group();
+		this.sam.add(this.sun);
+		this.sam.add(this.moon);
+		this.sprites.add(this.sam);
 	},
 
-	setupTree: function(){
-		this.tree = this.add.sprite(this.game.width/2, this.game.height/2 - 120, 'PLAY_TA2','tree');
-		this.tree.cropRect = new Phaser.Rectangle(0,0,this.tree.width, this.tree.height - 34);
-		this.tree.updateCrop();
-		this.sprites.add(this.tree);
-	},
+	
 
 	setupClouds: function(){
+		this.clouds = this.add.group();
+		this.sprites.add(this.clouds);
+	},
 
+	initClouds: function(){
+		var  numClouds = 4 + Math.random() * 2;
+		for(var i = 0; i < numClouds; i++){
+			var cloudNum = 1 +  Math.floor((Math.random() * 3));
+			var cloud = this.add.sprite(
+				50 + Math.random() * (game.width - 100),
+			 -10 + Math.random() * (game.height - 200),
+			 'PLAY_TA2', 'Cloud' + cloudNum);
+			var scale = .3 + .5 * Math.random();
+			var speed = this.CLOUDSPEED[0] + Math.random() * (this.CLOUDSPEED[1]);
+			var moveTween = this.add.tween(cloud.position).to({x: -1 * cloud.width}, cloud.position.x / game.width * speed);	
+			moveTween.onComplete.add(function(){
+				cloud.destroy();
+			}.bind(this), this);
+			moveTween.start();
+			cloud.scale.setTo(scale, scale);
+			cloud.alpha = .9;
+			this.clouds.add(cloud);
+		}
+	},
+
+	cloudSpawner: function(){
+		if(this.cloudTime < this.CLOUDTIMER){
+			this.cloudTime++;
+		}
+		else{
+			var cloudNum = 1 +  Math.floor((Math.random() * 3));
+			var cloud = this.add.sprite(game.width,
+			 -10 + Math.random() * (game.height - 200),
+			 'PLAY_TA2', 'Cloud' + cloudNum);
+			var scale = .3 + .5 * Math.random();
+			var speed = this.CLOUDSPEED[0] + Math.random() * (this.CLOUDSPEED[1]);
+			var moveTween = this.add.tween(cloud.position).to({x: -1 * cloud.width}, speed);	
+			moveTween.onComplete.add(function(){
+				cloud.destroy();
+			}.bind(this), this);
+			moveTween.start();
+			cloud.scale.setTo(scale, scale);
+			cloud.alpha = .9;
+			this.CLOUDTIMER = this.CLOUDDELAY[0] + Math.random() * this.CLOUDDELAY[1];
+			this.cloudTime = 0;
+			this.clouds.add(cloud);
+		}
 	},
 
 	setupWinter: function(){
@@ -532,8 +589,54 @@ BasicGame.Game.prototype = {
 
 		//I used canJump as an indicator of if toon is jumping. If we can jump, we aren't jumping.
 		//If toon is on the ground, make toon move back with the road
+		//So if we are hurt (we reached the else statement) and canJump (we are on the ground) we will move backwards
 		else if(this.canJump){
-			this.toon.body.velocity.x = -120;
+			this.toon.body.velocity.x = -120 - .004 * this.score;
+		}
+	},
+
+	initTrees: function(){
+		var numTrees = 2 + Math.random() * 3; 
+		for(var i = 0; i < numTrees; i++){
+			var tree = this.add.sprite(this.game.width, this.BOTTOM, 'PLAY_TA2','tree');
+			var scale = .1 + (Math.random() * .2);
+			tree.anchor.setTo(0,1);
+			tree.scale.setTo(scale, scale);
+
+			tree.position.y = this.BOTTOM - 20 * (.25/scale) + 5;
+			tree.position.x = 200 + Math.random() * (game.width - 200);
+			this.trees.add(tree);
+			tree.moveTween = this.add.tween(tree.position).to({x: -1 * tree.width}, tree.position.x / game.width * (this.ROADSPEED * .3/scale));
+			tree.moveTween.start();
+			tree.moveTween.onComplete.add(function(){
+				tree.destroy();
+			}.bind(this), this);
+		}
+		this.trees.sort('y', Phaser.Group.SORT_ASCENDING);
+	},
+
+	treeSpawner: function(){
+		if(this.treeTime < this.TREETIMER){
+			this.treeTime++;
+		}
+		else{
+			var tree = this.add.sprite(this.game.width, this.BOTTOM, 'PLAY_TA2','tree');
+			var scale = .1 + (Math.random() * .2);
+			tree.anchor.setTo(0,1);
+			tree.scale.setTo(scale, scale);
+
+			tree.position.y = this.BOTTOM - 20 * (.25/scale) + 5;
+			//tree.cropRect = new Phaser.Rectangle(0,0, tree.width, tree.height);
+			//tree.updateCrop();
+			
+			this.trees.add(tree);
+			tree.moveTween = this.add.tween(tree.position).to({x: -1 * tree.width}, this.ROADSPEED * .3/scale);
+			tree.moveTween.start();
+			tree.moveTween.onComplete.add(function(){
+				tree.destroy();
+			}.bind(this), this);
+			this.treeTime = 0;
+			this.TREETIMER = this.TREEDELAY[0] + (Math.random() * this.TREEDELAY[1]);
 		}
 	},
 
@@ -645,7 +748,8 @@ BasicGame.Game.prototype = {
 				if(this.caution.position.x > -80){
 					this.caution.position.x = -80;
 					this.cautionText.position.x = this.caution.position.x + this.caution.width/2;
-					this.windSound.play();
+					if(this.soundEnabled)
+						this.windSound.play();
 				}
 			}
 			else{
@@ -689,6 +793,7 @@ BasicGame.Game.prototype = {
 		else{
 			this.scoreTime++;
 		}
+		this.ROADACC += .001 * this.scoreMult;
 
 	},	
 
@@ -792,7 +897,7 @@ BasicGame.Game.prototype = {
 			this.mole.cropRect.height = 0;
 			this.mole.updateCrop();
 			this.mole.hasHit = false;
-			this.moleEnemy.moveTween = this.add.tween(this.moleEnemy).to({x:-1 * (this.game.width + this.mole.width + 100)}, this.ROADSPEED -1000);
+			this.moleEnemy.moveTween = this.add.tween(this.moleEnemy).to({x:-1 * (this.game.width + this.mole.width + 100)}, this.ROADSPEED);
 			this.moleEnemy.moveTween.onComplete.add(this.resetMole, this);
 			this.moleEnemy.moveTween.start();
 		}
@@ -943,7 +1048,8 @@ BasicGame.Game.prototype = {
 	},
 
 	collideCar: function(){
-		this.owSound.play();
+		if(this.soundEnabled)
+			this.owSound.play();
 		this.car.hitbox.y = this.game.height;
 		this.car.goodbox.y = this.game.height;
 		if(this.car.isIdle){
@@ -983,9 +1089,9 @@ BasicGame.Game.prototype = {
 
 			this.deersign = this.add.sprite(this.deer.position.x,this.game.height/2,'PLAY_TA2','deer_sign');
 			this.deersign.anchor.setTo(.5,0);
-			var flashSign = this.add.tween(this.deersign).to({alpha:0,},
-			 100, Phaser.Easing.Exponential.Out, true, 1000, -1,true);
-			flashSign.repeatDelay(1000);
+			this.deersign.blinkTween = this.add.tween(this.deersign).to({alpha:0,},
+			 100, Phaser.Easing.Exponential.Out, true, 1000, 3,true);
+			this.deersign.blinkTween.repeatDelay(600);
 			
 			this.deer.startTween = this.add.tween(this.deer.position).to({y: this.game.height/2 + 100}, 1500);
 			this.deer.startTween.onComplete.add(this.moveDeer, this);
@@ -1023,8 +1129,8 @@ BasicGame.Game.prototype = {
 				this.deer.zPos--;
 				this.sprites.swap(this.deer, this.enemies);
 			}
-			else if(this.deer.scale.x < .25 && this.deer.zPos == 1){
-				this.sprites.swap(this.deer, this.tree);
+			else if(this.deer.scale.x < .15 && this.deer.zPos == 1){
+				this.sprites.swap(this.deer, this.trees);
 				this.deer.zPos--;
 			}
 			else if(this.deer.scale.x <= .1){
@@ -1058,6 +1164,7 @@ BasicGame.Game.prototype = {
 	togglePause: function(btn){
 		if(this.paused){
 			this.unpauseGame();
+
 		}
 		else{
 			this.pauseGame();
@@ -1090,6 +1197,7 @@ BasicGame.Game.prototype = {
     		this.soundCheck.anchor.setTo(.5,.5);
     	}
 
+
     	this.pauseText2 = this.add.bitmapText(this.game.width/2, 390, 'zantroke', 'Unpause with :P: or the pause button', 18);
     	this.pauseText2.anchor.setTo(.5,.5);
     	this.physics.arcade.isPaused = true;
@@ -1121,6 +1229,7 @@ BasicGame.Game.prototype = {
 		}
 
 		if(!this.deer.isReset){
+			this.deersign.blinkTween.pause();
 			if(this.deer.isStarting){
 				this.deer.startTween.pause();
 			}
@@ -1135,12 +1244,20 @@ BasicGame.Game.prototype = {
 				game.time.events.stop();
 			}
 		}
+
+		this.trees.forEach(function(tree){
+			tree.moveTween.pause();
+		}.bind(this));
     },
 
     resumeTweens: function(){
     	//Unpause all acorns
 		this.sprites.acorns.forEach(function(acorn){
 			acorn.moveTween.resume();
+		}.bind(this));
+
+		this.trees.forEach(function(tree){
+			tree.moveTween.resume();
 		}.bind(this));
     
 		//Now for the drink
@@ -1166,6 +1283,7 @@ BasicGame.Game.prototype = {
 				game.time.events.resume();
 		}
 		if(!this.deer.isReset){
+			this.deersign.blinkTween.resume();
 			if(this.deer.isStarting){
 				this.deer.startTween.resume();
 			}
@@ -1181,7 +1299,8 @@ BasicGame.Game.prototype = {
     		this.toon.animations.paused = pause;
     		this.car.animations.paused = pause;
     		this.crow.animations.paused = pause;
-    		this.deer.animations.paused = pause;
+    		if(!this.deer.isReset)
+    			this.deer.animations.paused = pause;
     },
 
     toggleMusic: function(){
@@ -1202,9 +1321,15 @@ BasicGame.Game.prototype = {
     	if(this.soundEnabled){
     		this.soundCheck = this.add.sprite(this.soundBox.position.x, this.soundBox.position.y, 'UI_TA2', 'check');
     		this.soundCheck.anchor.setTo(.5,.5);
+    		if(this.winterDistance < 0){
+				this.windSound.play();
+			}
     	}
     	else{
     		this.soundCheck.destroy();
+    		if(this.winterDistance < 0){
+				this.windSound.pause();
+			}
     	}	
     },
 
