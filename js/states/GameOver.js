@@ -15,8 +15,6 @@ BasicGame.GameOver.prototype = {
     },
 
     create: function() {
-      //  kongregate.stats.submit("Score",BasicGame.score);
-       // kongregate.stats.submit("AcornsCollected", BasicGame.acornsCollected)
         var theme = this.add.audio('GameOver Theme');
         theme.play();
 

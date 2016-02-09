@@ -4,23 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="user-scalable=0, initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, minimal-ui=1">
     <title>Squirrel Run</title>
-    <script src="js/libs/modernizr-custom.js"></script>
     <script src="js/libs/phaser.min.js"></script>
-   
-    <!-- Load the Kongregate API, now it is available arcross all game states -->
-    <script src='https://cdn1.kongregate.com/javascripts/kongregate_api.js'></script>
-    <script>
-        // Load the API
-        var kongregate;
-        kongregateAPI.loadAPI(onComplete);
-         
-        // Callback function
-        function onComplete(){
-          // Set the global kongregate API object
-          kongregate = kongregateAPI.getAPI();
-        }
-    </script>
-
     <script src="js/states/loading/Boot.js"></script>
     <script src="js/states/loading/Preloader.js"></script>
     <script src="js/states/MainMenu.js"></script>
