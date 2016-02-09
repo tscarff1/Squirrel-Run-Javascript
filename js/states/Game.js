@@ -61,8 +61,10 @@ BasicGame.Game.prototype = {
 		this.CARCHANCE =.05;
 		this.CARBOX = [10,80,10,0];
 		this.CARBOX1 = [10,50,20,120];
-		this.IDLETIMER = 7 * Phaser.Timer.SECOND;
+		this.IDLETIMER = 500;
 		this.idleTime = 0;
+		this.RIDETIMER = 300;
+		this.rideTime = 0;
 
 		this.DEERCHANCE = .003;
 		this.DEERBOX = [10,10,10,10];
@@ -88,7 +90,7 @@ BasicGame.Game.prototype = {
 		//Sound stuff
 		this.musicEnabled = true;
 		this.soundEnabled = true;
-		this.music = this.add.audio('Game Theme',.9);
+		this.music = this.add.audio('Game Theme',.7);
 		this.popSound = this.add.audio('Pop');
 		this.owSound = this.add.audio('Ow');
 		this.yihooSound = this.add.audio('Yihoo');
@@ -98,7 +100,7 @@ BasicGame.Game.prototype = {
 		this.engineSound = this.add.audio('Engine',.7);
 		this.honkSound = this.add.audio('Honk',.7);
 		this.clipclopSound = this.add.audio('Clipclop');
-		this.gongSound = this.add.audio('Gong');
+		this.gongSound = this.add.audio('Gong', .7);
 		this.windSound = this.add.audio('Wind');
 		this.windSound.loop = true;
 		this.paused = false;
@@ -108,33 +110,14 @@ BasicGame.Game.prototype = {
 		game.load.image('ground', 'assets/images/hills.png');	},
 
 	create: function(){
+		this.loadSettings();
 		this.sprites = this.add.group();
 		//Set up the sun and moon (MUST be first)
 		this.setUpSAM();
 		this.setupClouds();
 		this.initClouds();
 
-		//draw the background
-		this.hills = this.add.tileSprite(0, this.game.height/2 +100, 800, 100,'ground');
-		this.sprites.add(this.hills);
-	    var botGraphics = this.add.graphics(0,0);
-	    botGraphics.moveTo(0, this.BOTTOM);
-	    botGraphics.lineStyle(1,0xffffff,1);
-	    botGraphics.lineTo(this.game.width, this.BOTTOM);
-	  	this.botBound = this.add.sprite(0, this.BOTTOM, botGraphics.generateTexture());
-
-	  	var graphics = this.add.graphics(0, 0);	
-		graphics.moveTo(0,this.BOTTOM+1);
-	    graphics.beginFill(0x333333);
-	    graphics.lineTo(0, this.game.stage.height);
-	    graphics.lineTo(this.game.stage.width, this.game.stage.height);
-	    graphics.lineTo(this.game.stage.width, this.BOTTOM);
-	    
-	    graphics.endFill();
-	    graphics.moveTo(0,0);
-	    botGraphics.destroy();
-		this.sprites.add(this.botBound);
-		this.sprites.add(graphics);
+		this.setupBG();
 
 		//Set up for trees
 		this.trees = this.add.group();
@@ -156,7 +139,9 @@ BasicGame.Game.prototype = {
 		//Has to go last so that the display is on top
 		this.setupDisplay();
 
-		this.startGame();
+		this.music.loop = true;
+		if(this.musicEnabled)
+			this.music.play();
 
 		this.startBtn = this.game.add.button(0,0, 'UI_TA', this.togglePause, this, 'button', 'button', 'button');
 		this.startBtn.position.x = this.game.width - this.startBtn.width - 10;
@@ -175,10 +160,15 @@ BasicGame.Game.prototype = {
         this.sprites.setChildIndex(this.trees, 5);
 	},
 
-	startGame: function(){
-		//Sound stuff on the other hand can go whereever
-		this.music.loop = true;
-		this.music.play();
+	loadSettings: function(){
+
+		if(localStorage['soundEnabled'] != null){
+			this.soundEnabled = (localStorage['soundEnabled'] == true);
+		}
+
+		if(localStorage['musicEnabled'] != null){
+			this.musicEnabled = (localStorage['musicEnabled'] == true);
+		}
 	},
 
 	update: function(){
@@ -194,6 +184,7 @@ BasicGame.Game.prototype = {
 
 			this.physics.arcade.collide(this.toon, this.botBound, this.landing, null, this);
 			this.moveToon();
+			this.updateRide();
 			this.updateHyper();
 
 			//this.moleStarter();
@@ -251,6 +242,30 @@ BasicGame.Game.prototype = {
 	},	
 */
 	//----- SETUP FUNCTIONS -----
+	setupBG:function(){
+		//draw the background
+		this.hills = this.add.tileSprite(0, this.game.height/2 +100, 800, 100,'ground');
+		this.sprites.add(this.hills);
+	    var botGraphics = this.add.graphics(0,0);
+	    botGraphics.moveTo(0, this.BOTTOM);
+	    botGraphics.lineStyle(1,0xffffff,1);
+	    botGraphics.lineTo(this.game.width, this.BOTTOM);
+	  	this.botBound = this.add.sprite(0, this.BOTTOM, botGraphics.generateTexture());
+
+	  	var graphics = this.add.graphics(0, 0);	
+		graphics.moveTo(0,this.BOTTOM+1);
+	    graphics.beginFill(0x333333);
+	    graphics.lineTo(0, this.game.stage.height);
+	    graphics.lineTo(this.game.stage.width, this.game.stage.height);
+	    graphics.lineTo(this.game.stage.width, this.BOTTOM);
+	    
+	    graphics.endFill();
+	    graphics.moveTo(0,0);
+	    botGraphics.destroy();
+		this.sprites.add(this.botBound);
+		this.sprites.add(graphics);
+	},
+
 	setupToon: function(){
 		this.toon = this.add.sprite(0,0,'Play_TA', 'Toon_Running_1');
 		this.toon.position.setTo(50,250);
@@ -358,11 +373,11 @@ BasicGame.Game.prototype = {
 			 'PLAY_TA2', 'Cloud' + cloudNum);
 			var scale = .3 + .5 * Math.random();
 			var speed = this.CLOUDSPEED[0] + Math.random() * (this.CLOUDSPEED[1]);
-			var moveTween = this.add.tween(cloud.position).to({x: -1 * cloud.width}, cloud.position.x / game.width * speed);	
-			moveTween.onComplete.add(function(){
+			cloud.moveTween =this.add.tween(cloud.position).to({x: -1 * cloud.width}, cloud.position.x / game.width * speed);	
+			cloud.moveTween.onComplete.add(function(){
 				cloud.destroy();
 			}.bind(this), this);
-			moveTween.start();
+			cloud.moveTween.start();
 			cloud.scale.setTo(scale, scale);
 			cloud.alpha = .9;
 			this.clouds.add(cloud);
@@ -380,11 +395,11 @@ BasicGame.Game.prototype = {
 			 'PLAY_TA2', 'Cloud' + cloudNum);
 			var scale = .3 + .5 * Math.random();
 			var speed = this.CLOUDSPEED[0] + Math.random() * (this.CLOUDSPEED[1]);
-			var moveTween = this.add.tween(cloud.position).to({x: -1 * cloud.width}, speed);	
-			moveTween.onComplete.add(function(){
+			cloud.moveTween = this.add.tween(cloud.position).to({x: -1 * cloud.width}, speed);	
+			cloud.moveTween.onComplete.add(function(){
 				cloud.destroy();
 			}.bind(this), this);
-			moveTween.start();
+			cloud.moveTween.start();
 			cloud.scale.setTo(scale, scale);
 			cloud.alpha = .9;
 			this.CLOUDTIMER = this.CLOUDDELAY[0] + Math.random() * this.CLOUDDELAY[1];
@@ -557,7 +572,7 @@ BasicGame.Game.prototype = {
 	moveToon: function(){
 		this.toon.body.velocity.x = 0;
 		//Don't other with any input if toon is hurt
-		if(!this.toon.isHurt){
+		if(!this.toon.isHurt && !this.toon.isRiding){
 			var hyperBonus = 1;
 			var hyperJump = 1;
 			if(this.toon.isHyper){
@@ -582,9 +597,19 @@ BasicGame.Game.prototype = {
 			else if(this.CURSORS.right.isDown){
 				this.toon.body.velocity.x = this.TOONSPEED * hyperBonus;
 			}
+		}
 
+		else if(this.toon.isRiding){
+			//JUMPBUTTON is defined as Space bar in preload
+			if(this.JUMPBUTTON.isDown){
+				this.toon.body.velocity.y = -300; //arbitrary, changed as needed
+				this.canJump = false;
+				this.toon.frameName = 'Toon_Running_1';
 
-			
+				this.toon.body.immovable = false;
+				this.toon.body.allowGravity = true;
+				this.toon.isRiding = false;
+			}
 		}
 
 		//I used canJump as an indicator of if toon is jumping. If we can jump, we aren't jumping.
@@ -592,6 +617,13 @@ BasicGame.Game.prototype = {
 		//So if we are hurt (we reached the else statement) and canJump (we are on the ground) we will move backwards
 		else if(this.canJump){
 			this.toon.body.velocity.x = -120 - .004 * this.score;
+		}
+	},
+
+	updateRide: function(){
+		if(this.toon.isRiding){
+			if(this.rideTime < this.RIDETIMER)
+				this.rideTime++;
 		}
 	},
 
@@ -824,12 +856,12 @@ BasicGame.Game.prototype = {
 						this.collideCrow();
 					else if(enemy == this.car)
 						this.collideCar();
-					//Make toon trip!
-					this.toon.animations.stop(null, true);
-					this.toon.frameName = 'Toon_Tripping';
-					this.toon.isHurt = true;
-					//if(this.soundEnabled)
-					//	this.owSound.play();
+					if(!this.toon.isRiding){
+						//Make toon trip!
+						this.toon.animations.stop(null, true);
+						this.toon.frameName = 'Toon_Tripping';
+						this.toon.isHurt = true;
+					}
 				}
 		}.bind(this));
 
@@ -1032,9 +1064,11 @@ BasicGame.Game.prototype = {
 				this.idleTime++;
 			}
 			else if(this.idleTime == this.IDLETIMER){
-
+				this.moveCar();
+				this.idleTime = 0;
 			}
 		}
+
 	},
 
 	moveCar: function(){
@@ -1064,6 +1098,12 @@ BasicGame.Game.prototype = {
 
 	rideCar: function(){
 		this.toon.frameName='ToonSitting_1';
+		this.toon.body.immovable = true;
+		this.toon.body.allowGravity = false;
+		this.toon.body.velocity.y = 0;
+		this.car.hitbox.y = this.game.height;
+		this.car.goodbox.y = this.game.height;
+		this.toon.isRiding = true;
 	},
 
 	resetCar: function(){
@@ -1240,13 +1280,19 @@ BasicGame.Game.prototype = {
 		}
 
 		if(!this.car.isReset){
-			if(this.car.isIdle){
-				game.time.events.stop();
+			if(this.car.isMoving){
+				this.car.moveCar.pause();
+			}else if(!this.car.isIdle){
+				this.car.startCar.pause();
 			}
 		}
 
 		this.trees.forEach(function(tree){
 			tree.moveTween.pause();
+		}.bind(this));
+
+		this.clouds.forEach(function(cloud){
+			cloud.moveTween.pause();
 		}.bind(this));
     },
 
@@ -1258,6 +1304,10 @@ BasicGame.Game.prototype = {
 
 		this.trees.forEach(function(tree){
 			tree.moveTween.resume();
+		}.bind(this));
+
+		this.clouds.forEach(function(cloud){
+			cloud.moveTween.resume();
 		}.bind(this));
     
 		//Now for the drink
@@ -1279,9 +1329,13 @@ BasicGame.Game.prototype = {
 		}
 
 		if(!this.car.isReset){
-			if(this.car.isIdle)
-				game.time.events.resume();
+			if(this.car.isMoving){
+				this.car.moveCar.resume();
+			}else if(!this.car.isIdle){
+				this.car.startCar.resume();
+			}
 		}
+
 		if(!this.deer.isReset){
 			this.deersign.blinkTween.resume();
 			if(this.deer.isStarting){
@@ -1305,6 +1359,9 @@ BasicGame.Game.prototype = {
 
     toggleMusic: function(){
     	this.musicEnabled = !(this.musicEnabled);
+    	//Save settings
+    	localStorage["musicEnabled"] = this.musicEnabled.toString();
+
     	if(this.musicEnabled){
     		this.musicCheck = this.add.sprite(this.musicBox.position.x, this.musicBox.position.y, 'UI_TA2', 'check');
     		this.musicCheck.anchor.setTo(.5,.5);
@@ -1318,6 +1375,9 @@ BasicGame.Game.prototype = {
 
     toggleSound: function(){
     	this.soundEnabled = !(this.soundEnabled);
+    	//Save settings
+    	localStorage["soundEnabled"] = this.soundEnabled.toString();
+
     	if(this.soundEnabled){
     		this.soundCheck = this.add.sprite(this.soundBox.position.x, this.soundBox.position.y, 'UI_TA2', 'check');
     		this.soundCheck.anchor.setTo(.5,.5);
@@ -1354,7 +1414,17 @@ BasicGame.Game.prototype = {
     },
 
 	gameOver: function(){
-		console.log("game over");
-	}
+		BasicGame.score = this.score;
+		BasicGame.acornsCollected = this.acornsCollected;
+		if(this.musicEnabled)
+			this.music.stop();
+		if(this.soundEnabled){
+			this.windSound.stop();
+			if(!this.deer.isReset)
+				this.clipclopSound.stop();
+		}
+		this.state.start('GameOver');
+	},
+
 
 };

@@ -15,9 +15,8 @@ BasicGame.GameOver.prototype = {
     },
 
     create: function() {
-        console.log(BasicGame.score);
-        kongregate.stats.submit("Score",BasicGame.score); // The user collected a coin
-
+      //  kongregate.stats.submit("Score",BasicGame.score);
+       // kongregate.stats.submit("AcornsCollected", BasicGame.acornsCollected)
         var theme = this.add.audio('GameOver Theme');
         theme.play();
 

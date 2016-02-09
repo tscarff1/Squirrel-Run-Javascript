@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="user-scalable=0, initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, minimal-ui=1">
     <title>Squirrel Run</title>
+    <script src="js/libs/modernizr-custom.js"></script>
     <script src="js/libs/phaser.min.js"></script>
    
     <!-- Load the Kongregate API, now it is available arcross all game states -->
@@ -24,6 +25,7 @@
     <script src="js/states/loading/Preloader.js"></script>
     <script src="js/states/MainMenu.js"></script>
     <script src="js/states/Game.js"></script>
+    <script src="js/states/GameOver.js"></script>
     <script src="js/states/Instructions.js"></script>
     <link rel="stylesheet" type="text/css" href="css/style.css">
 
@@ -41,6 +43,7 @@
         game.state.add('MainMenu', BasicGame.MainMenu);
         game.state.add('Game', BasicGame.Game);
         game.state.add('Instructions', BasicGame.About);
+        game.state.add('GameOver', BasicGame.GameOver); 
         //Now start the Boot state.
         game.state.start('Boot');
     </script>
