@@ -15,8 +15,10 @@ BasicGame.GameOver.prototype = {
     },
 
     create: function() {
-        var theme = this.add.audio('GameOver Theme');
-        theme.play();
+        if(BasicGame.musicEnabled){
+            var theme = this.add.audio('GameOver Theme');
+            theme.play();
+        }
 
         
         var tree1 = this.add.sprite(0,0,'PLAY_TA2', 'snowtree');
@@ -41,8 +43,8 @@ BasicGame.GameOver.prototype = {
 
          this.startBtn = this.game.add.button(0,0, 'UI_TA', this.onClickFunction, this, 'button', 'button', 'button');
         this.startBtn.anchor.setTo(.5,.5);
-        this.startBtn.position.setTo(3* this.game.width/8 - this.startBtn.width/2, 
-            7 * this.game.height/8 - this.startBtn.height/2);
+        this.startBtn.position.setTo(3* this.game.width/7 - this.startBtn.width/2, 
+            5 * this.game.height/8 - this.startBtn.height/2);
 
         this.startTxt = this.add.bitmapText(this.startBtn.position.x-5, this.startBtn.position.y, 'zantroke', 'START', 30);
         this.startTxt.anchor.setTo(.5,.5);
@@ -55,8 +57,8 @@ BasicGame.GameOver.prototype = {
 
         this.menuBut = this.game.add.button(0,0, 'UI_TA', this.onClickFunction, this, 'button', 'button', 'button');
         this.menuBut.anchor.setTo(.5,.5);
-        this.menuBut.position.setTo( 6* this.game.width/8 - this.menuBut.width/2,
-                                      7 * this.game.height/8 - this.menuBut.height/2);
+        this.menuBut.position.setTo( 5* this.game.width/7 - this.menuBut.width/2 +20,
+                                      5 * this.game.height/8 - this.menuBut.height/2);
 
         this.menuTxt = this.game.add.bitmapText(this.menuBut.position.x -5, this.menuBut.position.y,
          'zantroke', 'Main Menu', 21);

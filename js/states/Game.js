@@ -24,14 +24,14 @@ BasicGame.Game.prototype = {
 		
 	/* Toon stats n' stuff*/
 		this.TOONBOX = [30,30,50,40];
-		this.TOONSPEED = 150;
+		this.TOONSPEED = 160;
 		this.canJump = false;
 		this.HURTTIME = 0;
 		this.HURTTIMER = 90;
 		this.HYPERTIME = 0;
 		this.HYPERTIMER = 300;
-		this.HYPERMOVEMENT = 2;
-		this.HYPERJUMP = 1.3;
+		this.HYPERMOVEMENT = 2.5;
+		this.HYPERJUMP = 1.5;
 
 	// Bonus related stuff
 		this.ACORNCHANCE = .007;
@@ -41,14 +41,14 @@ BasicGame.Game.prototype = {
 		this.DRINKSPEED = 5000;
 
 	//Enemy related stuff
-		this.ENEMYDELAY = 200;
+		this.ENEMYDELAY = 100;
+		this.MAXENEMYDELAY = 800;
 		this.enemyTimer = 0;
 		this.enemySpawned = false;
 		this.MOLECHANCE = 0.005;
 		this.MOLEHEIGHT;
 		this.MOLEBOX = [15,20,30,10];
 		this.MOLEPOPDIST = 150;
-		
 		this.BCHANCE = .002;
 		this.BBOX =[5,5,5,5];
 		this.BSPEED=7000;
@@ -58,9 +58,9 @@ BasicGame.Game.prototype = {
 		this.CROWTWEENCHANCES = [.5, .3, .2];
 		this.CROWSCALE = .7;
 		
-		this.CARCHANCE =.05;
-		this.CARBOX = [10,80,10,0];
-		this.CARBOX1 = [10,50,20,120];
+		this.CARCHANCE =.0008;
+		this.CARBOX = [40,120,20,0];
+		this.CARBOX1 = [10,60,30,120];
 		this.IDLETIMER = 500;
 		this.idleTime = 0;
 		this.RIDETIMER = 300;
@@ -81,16 +81,16 @@ BasicGame.Game.prototype = {
 		this.TREETIMER = this.TREEDELAY[0] + (Math.random() * this.TREEDELAY[1]);
 
 	//Winter stuff
-		this.winterDistance = 1000;
+		this.winterDistance = 1500;
 		this.winterMax = 200;
 		this.winterPadding = 80;
 		this.winterSpeed = .5;
 		this.cautionX = 10;
 
 		//Sound stuff
-		this.musicEnabled = true;
+		BasicGame.musicEnabled = true;
 		this.soundEnabled = true;
-		this.music = this.add.audio('Game Theme',.7);
+		this.music = this.add.audio('Game Theme',.75);
 		this.popSound = this.add.audio('Pop');
 		this.owSound = this.add.audio('Ow');
 		this.yihooSound = this.add.audio('Yihoo');
@@ -101,10 +101,11 @@ BasicGame.Game.prototype = {
 		this.honkSound = this.add.audio('Honk',.7);
 		this.clipclopSound = this.add.audio('Clipclop');
 		this.gongSound = this.add.audio('Gong', .7);
-		this.windSound = this.add.audio('Wind');
+		this.windSound = this.add.audio('Wind', .8);
 		this.windSound.loop = true;
-		this.paused = false;
 
+		this.paused = false;
+		this.gameSpeed = 1;
 		this.ROADACC = .01;
 
 		game.load.image('ground', 'assets/images/hills.png');	},
@@ -140,7 +141,7 @@ BasicGame.Game.prototype = {
 		this.setupDisplay();
 
 		this.music.loop = true;
-		if(this.musicEnabled)
+		if(BasicGame.musicEnabled)
 			this.music.play();
 
 		this.startBtn = this.game.add.button(0,0, 'UI_TA', this.togglePause, this, 'button', 'button', 'button');
@@ -167,13 +168,13 @@ BasicGame.Game.prototype = {
 		}
 
 		if(localStorage['musicEnabled'] != null){
-			this.musicEnabled = (localStorage['musicEnabled'] == true);
+			BasicGame.musicEnabled = (localStorage['musicEnabled'] == true);
 		}
 	},
 
 	update: function(){
 		if(!this.paused){
-			this.hills.tilePosition.x -= .5;
+			this.hills.tilePosition.x -= .5 * this.gameSpeed;
 			this.updateHitboxes();
 
 			this.updateScore();
@@ -229,8 +230,8 @@ BasicGame.Game.prototype = {
 
 		this.pauseListener();
 	},
-/*
-	// Comment this out when testing 'final' versions of game
+
+	/*// Comment this out when testing 'final' versions of game
 	render: function(){
 		game.debug.geom( this.toon.hitbox,     'rgba(255,0,0, .7)');
 		game.debug.geom( this.moleEnemy.hitbox,'rgba(0,255,0, .7)');
@@ -239,8 +240,8 @@ BasicGame.Game.prototype = {
 		game.debug.geom( this.car.hitbox,      'rgba(0,255,0, .7)');
 		game.debug.geom( this.car.goodbox,     'rgba(0,0,255, .7)');
 		game.debug.geom( this.deer.hitbox,     'rgba(0,255,0, .7)');
-	},	
-*/
+	},	*/
+
 	//----- SETUP FUNCTIONS -----
 	setupBG:function(){
 		//draw the background
@@ -386,7 +387,7 @@ BasicGame.Game.prototype = {
 
 	cloudSpawner: function(){
 		if(this.cloudTime < this.CLOUDTIMER){
-			this.cloudTime++;
+			this.cloudTime+=this.gameSpeed;
 		}
 		else{
 			var cloudNum = 1 +  Math.floor((Math.random() * 3));
@@ -399,6 +400,7 @@ BasicGame.Game.prototype = {
 			cloud.moveTween.onComplete.add(function(){
 				cloud.destroy();
 			}.bind(this), this);
+			cloud.moveTween.timeScale = this.gameSpeed;
 			cloud.moveTween.start();
 			cloud.scale.setTo(scale, scale);
 			cloud.alpha = .9;
@@ -448,13 +450,23 @@ BasicGame.Game.prototype = {
 	},
 
 	spawnEnemies: function(){
-		if(this.enemyTimer < this.ENEMYDELAY){
-			this.enemyTimer++;
+		this.enemyTimer+= this.gameSpeed;
+		console.log(this.enemyTimer);
+		if(this.enemyTimer % this.ENEMYDELAY == 0){
+			var enemyChance = Math.random();
+			if(enemyChance < 1.0/3){
+				this.spawnMole();
+			}
+			else if(enemyChance < 2.0/3){
+				this.spawnCrow();
+			}
+			else {
+				this.spawnBaseball();
+			}
 		}
-		else if(this.enemyTimer == this.ENEMYDELAY){
 
-			//enemySpawned is used to reduce the chance of two enemies appearing closer together
-			if(!this.enemySpawned){
+		else if(this.ENEMYDELAY >= this.MAXENEMYDELAY){
+			while(!this.enemySpawned){
 				var enemyChance = Math.random();
 				if(enemyChance < 1.0/3){
 					this.spawnMole();
@@ -465,7 +477,6 @@ BasicGame.Game.prototype = {
 				else {
 					this.spawnBaseball();
 				}
-				this.enemyTimer = 0;
 			}
 		}
 	},
@@ -601,14 +612,8 @@ BasicGame.Game.prototype = {
 
 		else if(this.toon.isRiding){
 			//JUMPBUTTON is defined as Space bar in preload
-			if(this.JUMPBUTTON.isDown){
-				this.toon.body.velocity.y = -300; //arbitrary, changed as needed
-				this.canJump = false;
-				this.toon.frameName = 'Toon_Running_1';
-
-				this.toon.body.immovable = false;
-				this.toon.body.allowGravity = true;
-				this.toon.isRiding = false;
+			if(this.JUMPBUTTON.isDown && this.rideTime > 50){
+				this.endRide();
 			}
 		}
 
@@ -624,7 +629,23 @@ BasicGame.Game.prototype = {
 		if(this.toon.isRiding){
 			if(this.rideTime < this.RIDETIMER)
 				this.rideTime++;
+			else if(this.rideTime == this.RIDETIMER){
+				this.endRide();
+			}
 		}
+	},
+
+	endRide: function(){
+			this.canJump = false;
+			this.toon.isRiding = false;
+			this.toon.body.velocity.y = -300; //arbitrary, changed as needed
+			this.toon.frameName = 'Toon_Running_1';
+
+			this.toon.body.immovable = false;
+			this.toon.body.allowGravity = true;
+			this.rideTime = 0;
+			this.moveCar();
+			this.revertSpeeds();
 	},
 
 	initTrees: function(){
@@ -649,7 +670,7 @@ BasicGame.Game.prototype = {
 
 	treeSpawner: function(){
 		if(this.treeTime < this.TREETIMER){
-			this.treeTime++;
+			this.treeTime+= this.gameSpeed;			
 		}
 		else{
 			var tree = this.add.sprite(this.game.width, this.BOTTOM, 'PLAY_TA2','tree');
@@ -664,6 +685,7 @@ BasicGame.Game.prototype = {
 			this.trees.add(tree);
 			tree.moveTween = this.add.tween(tree.position).to({x: -1 * tree.width}, this.ROADSPEED * .3/scale);
 			tree.moveTween.start();
+			tree.moveTween.timeScale = this.gameSpeed;
 			tree.moveTween.onComplete.add(function(){
 				tree.destroy();
 			}.bind(this), this);
@@ -691,6 +713,7 @@ BasicGame.Game.prototype = {
 			this.sprites.acorns.remove(acorn);	
 		}, this);
 		acorn.moveTween.start();
+		acorn.moveTween.timeScale = (1 > .7 * this.gameSpeed) ? 1:.7 * this.gameSpeed;
 		this.sprites.acorns.add(acorn);
 
 	},
@@ -769,12 +792,13 @@ BasicGame.Game.prototype = {
 
 	updateWinter: function(){
 			this.cautionText.text = Math.floor(Math.abs(this.winterDistance)/10) + 'm';
-			var winterMod =1;
-			if(this.toon.isHyper)
+			var winterMod =.3;
+			if(this.toon.isHyper || this.toon.isRiding)
 				winterMod *= -1
 			if(this.toon.isHurt)
-				winterMod += 1.3;
-			this.winterDistance -= winterMod*.5;
+				winterMod += .75;
+
+			this.winterDistance -= winterMod;
 
 			if(this.winterDistance < 0){
 				if(this.caution.position.x > -80){
@@ -825,7 +849,13 @@ BasicGame.Game.prototype = {
 		else{
 			this.scoreTime++;
 		}
-		this.ROADACC += .001 * this.scoreMult;
+		
+		var speedScalar = .2;
+		var update = Math.floor(speedScalar * this.score/100)/10;
+		if(update > this.gameSpeed && update<3.3){
+			//console.log('GameSpeed: ' + this.gameSpeed + ' -> ' + update);
+			this.adjustSpeed(update);
+		}
 
 	},	
 
@@ -866,7 +896,7 @@ BasicGame.Game.prototype = {
 		}.bind(this));
 
 		//Now check to see if we collide with the car's hitbox
-		if(Phaser.Rectangle.intersects(this.toon.hitbox, this.car.goodbox)){
+		if(Phaser.Rectangle.intersects(this.toon.hitbox, this.car.goodbox) && !this.toon.isHurt && !this.car.isMoving){
 			this.rideCar();
 		}
 
@@ -899,7 +929,7 @@ BasicGame.Game.prototype = {
 
 
 		//check for collision with energy drink
-		if(Phaser.Rectangle.intersects(this.toon.hitbox, this.drink)){
+		if(Phaser.Rectangle.intersects(this.toon.hitbox, this.drink) && !this.toon.isRiding){
 			this.resetDrink();
 			this.startHyper();
 		}
@@ -925,6 +955,8 @@ BasicGame.Game.prototype = {
 	spawnMole: function(){
 		if(this.moleEnemy.isReset){
 			this.moleEnemy.isReset = false;
+			this.enemySpawned = true;
+			this.enemyTimer = 0;
 			this.mole.y = this.BOTTOM;
 			this.mole.cropRect.height = 0;
 			this.mole.updateCrop();
@@ -932,6 +964,7 @@ BasicGame.Game.prototype = {
 			this.moleEnemy.moveTween = this.add.tween(this.moleEnemy).to({x:-1 * (this.game.width + this.mole.width + 100)}, this.ROADSPEED);
 			this.moleEnemy.moveTween.onComplete.add(this.resetMole, this);
 			this.moleEnemy.moveTween.start();
+			this.moleEnemy.moveTween.timeScale = this.gameSpeed;
 		}
 	},
 
@@ -955,12 +988,13 @@ BasicGame.Game.prototype = {
 	spawnBaseball: function(){
 		if(this.baseball.isReset){
 			this.baseball.isReset = false;
-
+			this.enemySpawned = true;
+			this.enemyTimer = 0;
 			this.baseball.moveTime = this.BSPEED + Math.floor(Math.random() * 400)-200;
-			this.baseball.xTween = this.add.tween(this.baseball).to({x:-1 * this.baseball.width}, this.baseball.moveTime);
-			this.baseball.xTween.onComplete.add(this.resetBaseball, this);
-			this.baseball.xTween.start();
-			
+			this.baseball.moveTween = this.add.tween(this.baseball).to({x:-1 * this.baseball.width}, this.baseball.moveTime);
+			this.baseball.moveTween.onComplete.add(this.resetBaseball, this);
+			this.baseball.moveTween.start();
+			this.baseball.moveTween.timeScale = this.gameSpeed;
 			this.baseball.yTween = this.add.tween(this.baseball).to({y: [this.BOTTOM - this.baseball.height/2,this.game.height/2 +20]}, 
 				1000,"Sine.easeInOut", true, 0 ,-1);
 			this.baseball.yTween.start();
@@ -978,7 +1012,7 @@ BasicGame.Game.prototype = {
 	},
 
 	resetBaseball: function(){	
-		this.baseball.xTween.stop();
+		this.baseball.moveTween.stop();
 		this.baseball.yTween.stop();
 		this.xOffset = 20 + Math.floor(Math.random() * 30);
 		this.baseball.position.y = this.game.height/2+20;
@@ -995,6 +1029,8 @@ BasicGame.Game.prototype = {
 	spawnCrow: function(){
 		if(this.crow.isReset){
 			this.crow.isReset = false;
+			this.enemySpawned = true;
+			this.enemyTimer = 0;
 			this.crow.moveTween = this.add.tween(this.crow).to({x: -1 * this.crow.width - 20}, 6000);
 			this.crow.moveTween.onComplete.add(this.resetCrow, this);
 			this.crow.yTween;
@@ -1009,9 +1045,11 @@ BasicGame.Game.prototype = {
 				var startY = this.crow.position.y;
 				var endY = 300;
 				this.crow.yTween = this.add.tween(this.crow).to({y:[startY - 300, startY, startY + 300, startY]},
-				 2000, Phaser.Easing.Linear.easeInOut, true, 1000, 10);
+				 2000, Phaser.Easing.Linear.easeInOut, true, 0, 10);
 				this.crow.yTween.interpolation(Phaser.Math.bezierInterpolation);
 			 }
+			 this.crow.moveTween.timeScale = this.gameSpeed;
+			 this.crow.yTween.timeScale = 1 + Math.floor(.6 * this.gameSpeed);
 			this.crow.moveTween.start();
 			this.crow.yTween.start();
 		}
@@ -1046,7 +1084,7 @@ BasicGame.Game.prototype = {
 		if(Math.random() < this.CARCHANCE && this.car.isReset){
 			this.car.isReset = false;
 			this.car.x = -1 * this.car.width - 120;
-			this.car.startCar = this.add.tween(this.car).to({x: -100}, 3800, Phaser.Easing.Cubic.Out);
+			this.car.startCar = this.add.tween(this.car).to({x: -30}, 3800, Phaser.Easing.Cubic.Out);
 			this.car.startCar.start();
 			this.car.startCar.onComplete.addOnce(this.idleCar, this);
 			if(this.soundEnabled)
@@ -1073,6 +1111,7 @@ BasicGame.Game.prototype = {
 
 	moveCar: function(){
 		this.car.isIdle = false;
+		this.car.idleTime = 0;
 		this.car.moveCar = this.add.tween(this.car).to({x: this.game.width}, 4000, Phaser.Easing.Quadratic.In);
 		this.car.moveCar.onComplete.addOnce(this.resetCar, this);
 		this.car.moveCar.start();
@@ -1104,6 +1143,49 @@ BasicGame.Game.prototype = {
 		this.car.hitbox.y = this.game.height;
 		this.car.goodbox.y = this.game.height;
 		this.toon.isRiding = true;
+
+
+		if(this.car.isIdle){
+			this.car.isIdle = false;
+			this.car.idleTime = 0;
+		}
+		//since we cant ride while car is moving our only option is the car is starting
+		else {
+			this.car.startCar.stop();
+		}
+		this.car.rideTween = this.add.tween(this.car.position).to({x: 100}, 500);
+		var toonX = this.toon.position.x - this.car.position.x;
+		this.toon.rideTween  = this.add.tween(this.toon.position).to({x: 100 + toonX}, 500);
+		this.toon.rideTween.start();
+		this.car.rideTween.start();
+		this.car.rideTween.onComplete.add(function(){this.adjustSpeed(2 * this.gameSpeed)}, this);
+	},
+
+	adjustSpeed: function(val){
+		val = (val > 1) ? val :1;
+		this.gameSpeed = val;
+		this.clouds.forEach(function(cloud){
+			cloud.moveTween.timeScale = val;
+		}, this);
+
+		this.sprites.acorns.forEach(function(acorn){
+			acorn.moveTween.timeScale = val;
+		}, this);
+
+		this.trees.forEach(function(tree){
+			tree.moveTween.timeScale =val;
+		}, this);
+
+		if(!this.moleEnemy.isReset)
+			this.moleEnemy.moveTween.timeScale = val;
+		if(!this.crow.isReset)
+			this.crow.moveTween.timeScale = val;
+		if(!this.baseball.isReset)
+			this.baseball.moveTween.timeScale = val;
+	},
+
+	revertSpeeds: function(){
+		this.adjustSpeed(1);
 	},
 
 	resetCar: function(){
@@ -1223,7 +1305,7 @@ BasicGame.Game.prototype = {
     	this.musicText.anchor.setTo(0,.5);
     	this.musicBox = this.add.button(450, 200, 'UI_TA2', this.toggleMusic, this, 'box','box','box');
     	this.musicBox.anchor.setTo(.5,.5);
-    	if(this.musicEnabled){
+    	if(BasicGame.musicEnabled){
     		this.musicCheck = this.add.sprite(this.musicBox.position.x, this.musicBox.position.y, 'UI_TA2', 'check');
     		this.musicCheck.anchor.setTo(.5,.5);
     	}
@@ -1260,7 +1342,7 @@ BasicGame.Game.prototype = {
 		if(!this.moleEnemy.isReset)
 			this.moleEnemy.moveTween.pause();
 		if(!this.baseball.isReset){
-			this.baseball.xTween.pause();
+			this.baseball.moveTween.pause();
 			this.baseball.yTween.pause();
 		}
 		if(!this.crow.isReset){
@@ -1285,6 +1367,11 @@ BasicGame.Game.prototype = {
 			}else if(!this.car.isIdle){
 				this.car.startCar.pause();
 			}
+		}
+
+		if(this.toon.isRiding){
+			this.toon.rideTween.pause();
+			this.car.rideTween.pause();
 		}
 
 		this.trees.forEach(function(tree){
@@ -1320,7 +1407,7 @@ BasicGame.Game.prototype = {
 		if(!this.moleEnemy.isReset)
 			this.moleEnemy.moveTween.resume();
 		if(!this.baseball.isReset){
-			this.baseball.xTween.resume();
+			this.baseball.moveTween.resume();
 			this.baseball.yTween.resume();
 		}
 		if(!this.crow.isReset){
@@ -1334,6 +1421,11 @@ BasicGame.Game.prototype = {
 			}else if(!this.car.isIdle){
 				this.car.startCar.resume();
 			}
+		}
+
+		if(this.toon.isRiding){
+			this.toon.rideTween.resume();
+			this.car.rideTween.resume();
 		}
 
 		if(!this.deer.isReset){
@@ -1358,11 +1450,11 @@ BasicGame.Game.prototype = {
     },
 
     toggleMusic: function(){
-    	this.musicEnabled = !(this.musicEnabled);
+    	BasicGame.musicEnabled = !(BasicGame.musicEnabled);
     	//Save settings
-    	localStorage["musicEnabled"] = this.musicEnabled.toString();
+    	localStorage["musicEnabled"] = BasicGame.musicEnabled.toString();
 
-    	if(this.musicEnabled){
+    	if(BasicGame.musicEnabled){
     		this.musicCheck = this.add.sprite(this.musicBox.position.x, this.musicBox.position.y, 'UI_TA2', 'check');
     		this.musicCheck.anchor.setTo(.5,.5);
     		this.music.play();
@@ -1400,7 +1492,7 @@ BasicGame.Game.prototype = {
     	this.musicText.destroy();
     	this.soundBox.destroy();
     	this.soundText.destroy();
-    	if(this.musicEnabled)
+    	if(BasicGame.musicEnabled)
     		this.musicCheck.destroy();
     	if(this.soundEnabled)
     		this.soundCheck.destroy();
@@ -1416,7 +1508,7 @@ BasicGame.Game.prototype = {
 	gameOver: function(){
 		BasicGame.score = this.score;
 		BasicGame.acornsCollected = this.acornsCollected;
-		if(this.musicEnabled)
+		if(BasicGame.musicEnabled)
 			this.music.stop();
 		if(this.soundEnabled){
 			this.windSound.stop();
