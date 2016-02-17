@@ -22,6 +22,8 @@ BasicGame.GameOver.prototype = {
 
         
         var tree1 = this.add.sprite(0,0,'PLAY_TA2', 'snowtree');
+        var tree2 = this.add.sprite(game.width,0,'PLAY_TA2', 'snowtree');
+        tree2.anchor.setTo(1,0);
         this.sleepy = this.add.sprite(0,0,'UI_TA', 'Sleeping Toon');
         this.sleepy.anchor.setTo(.5,1);
         this.sleepy.position.x = this.game.width/2;
