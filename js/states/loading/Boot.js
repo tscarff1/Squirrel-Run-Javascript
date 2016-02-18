@@ -26,7 +26,7 @@ BasicGame.Boot.prototype = {
     preload: function() {
 
         //  Here we load the assets required for our preloader (in this case a background and a loading bar)
-        this.load.atlas('preloader', 'assets/images/atlases/preloader.png', 'assets/json/atlases/preloader.json');
+        this.load.atlas('PRELOAD_TA', 'assets/images/PRELOAD_TA.png', 'assets/json/PRELOAD_TA.json');
 
     },
 

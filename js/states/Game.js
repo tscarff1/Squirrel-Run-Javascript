@@ -41,7 +41,7 @@ BasicGame.Game.prototype = {
 		this.DRINKSPEED = 5000;
 
 	//Enemy related stuff
-		this.ENEMYDELAY = 130;
+		this.ENEMYDELAY = 250;
 		this.MAXENEMYDELAY = 800;
 		this.enemyTimer = 0;
 		this.enemySpawned = false;
@@ -66,7 +66,7 @@ BasicGame.Game.prototype = {
 		this.RIDETIMER = 300;
 		this.rideTime = 0;
 
-		this.DEERCHANCE = .003;
+		this.DEERCHANCE = .005;
 		this.DEERBOX = [10,10,10,10];
 
 	//Background stuff
@@ -112,7 +112,6 @@ BasicGame.Game.prototype = {
 		game.load.image('ground', 'assets/images/hills.png');	},
 
 	create: function(){
-		this.loadSettings();
 		this.sprites = this.add.group();
 		//Set up the sun and moon (MUST be first)
 		this.setUpSAM();
@@ -164,15 +163,7 @@ BasicGame.Game.prototype = {
         this.sprites.setChildIndex(this.trees, 5);
 	},
 
-	loadSettings: function(){
-		if(localStorage['soundEnabled'] != null){
-			this.soundEnabled = (localStorage['soundEnabled'] == 'true');
-		}
-
-		if(localStorage['musicEnabled'] != null){
-			BasicGame.musicEnabled = (localStorage['musicEnabled'] == 'true');
-		}
-	},
+	
 
 	update: function(){
 		if(!this.paused){
@@ -322,28 +313,30 @@ BasicGame.Game.prototype = {
 		panel.scale.setTo(2.7,1.6);
 
 		var hyperPanel = this.add.sprite(220,55,'UI_TA', 'Hyper Bar Panel');
-		this.hyperBar = this.add.sprite(231, 58, 'UI_TA', 'Hyper Bar Meter');
+		this.hyperBar = this.add.sprite(hyperPanel.position.x + 11, 58, 
+			'UI_TA', 'Hyper Bar Meter');
 		this.hyperBar.MAXWIDTH = this.hyperBar.width;
 		this.hyperBar.width = 1;
-		this.scoreText = this.add.bitmapText(220, 10, 'zantroke', 'Score: 0', 30);
+		this.scoreText = this.add.bitmapText(hyperPanel.position.x, 10, 
+			'zantroke', 'Score: 0', 30);
 
-		var acornBG = this.add.sprite(510,10,'Play_TA', 'acorn');
+		var acornBG = this.add.sprite(500,10,'Play_TA', 'acorn');
 		acornBG.angle = 40;
 		acornBG.scale.setTo(1.2,1.2);
 		acornBG.tint = 0x888888;
 		acornBG.alpha = .6;
 		
-		this.acornDisplay = this.add.sprite(510,10,'Play_TA','acorn');
+		this.acornDisplay = this.add.sprite(acornBG.position.x,10,'Play_TA','acorn');
 		this.acornDisplay.angle = 40;
 		this.acornDisplay.scale.setTo(1.2,1.2);
 		this.acornDisplay.tint = 0xeeeeee;
 		 //	A mask is a Graphics object
 	    this.acornMask = game.add.graphics(0, 0);
     	this.acornMask.beginFill(0xffffff);
-    	this.acornMask.drawRect(485,10, this.acornDisplay.width + 10, 155);
+    	this.acornMask.drawRect(475,10, this.acornDisplay.width + 10, 155);
   		this.acornDisplay.mask = this.acornMask;
 
-		this.multText = this.add.bitmapText(530, 50, 'zantroke', 'x1', 24);
+		this.multText = this.add.bitmapText(520, 50, 'zantroke', 'x1', 24);
 	},
 
 	setUpSAM: function(){
@@ -1519,6 +1512,7 @@ BasicGame.Game.prototype = {
 
 	gameOver: function(){
 		BasicGame.score = this.score;
+		localStorage['score'] = this.score + '';
 		BasicGame.acornsCollected = this.acornsCollected;
 		if(BasicGame.musicEnabled)
 			this.music.stop();

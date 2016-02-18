@@ -10,6 +10,19 @@ BasicGame.Preloader = function(game) {
 BasicGame.Preloader.prototype = {
 
     preload: function() {
+        var panel = this.add.sprite(game.width/2, game.height/2, 'PRELOAD_TA', 'bg');
+        panel.scale.setTo(2.2,2);
+        panel.anchor.setTo(.5,.5);
+
+        var holder = this.add.sprite(game.width/2,game.height/2, 'PRELOAD_TA', 'holder');
+        holder.anchor.setTo(.5,.5);
+
+        this.meter = this.add.sprite(holder.x - holder.width/2 + 10, holder.y, 'PRELOAD_TA', 'bar');
+        this.meter.anchor.setTo(0,.5);
+        this.load.setPreloadSprite(this.meter);
+
+        this.acorn = this.add.sprite(this.meter.position.x + this.meter.width, game.height/2, 'PRELOAD_TA', 'acorn');
+        this.acorn.anchor.setTo(.5,.6);
         //setup the loader image that was loaded in Boot.js
      //   this.hyperBar = this.add.sprite(231, 58, 'UI_TA', 'Hyper Bar Meter');
 
@@ -43,13 +56,14 @@ BasicGame.Preloader.prototype = {
     },
 
     create: function() {
-
-        
+        var text = this.add.bitmapText(game.width/2, game.height/4, 'zantroke', 'LOADING...', 35);
+        text.anchor.setTo(.5,.5);
 
     },
     update: function(){
         if(!this.music.isDecoding)
             this.state.start('MainMenu');
+        this.acorn.position.x = this.meter.position.x + this.meter.width;
     }
 
 };

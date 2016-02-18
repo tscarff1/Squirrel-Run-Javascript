@@ -21,7 +21,8 @@ BasicGame.MainMenu.prototype = {
 
 
         this.game.stage.backgroundColor = '#006fe6';
-        this.add.sprite(0,0, 'UI_TA').frameName ='Toon the Squirrel Standing';
+        var toon = this.add.sprite(game.width,game.height, 'UI_TA', 'Toon the Squirrel Standing');
+        toon.anchor.setTo(1,1);
         var title = this.add.sprite(100,100, 'UI_TA');
         title.frameName ='Title';
         title.scale.setTo(.8,.8);
@@ -32,7 +33,7 @@ BasicGame.MainMenu.prototype = {
         this.startBtn = this.game.add.button(0,0, 'UI_TA', this.onClickFunction, this, 'button', 'button', 'button');
         this.startBtn.anchor.setTo(.5,.5);
         this.startBtn.position.setTo(3* this.game.width/8 - this.startBtn.width/2, 
-            7 * this.game.height/8 - this.startBtn.height/2);
+            5 * this.game.height/6 - this.startBtn.height/2);
 
         this.startBtn.txt = this.add.bitmapText(this.startBtn.position.x-5, this.startBtn.position.y, 'zantroke', 'START', 30);
         this.startBtn.txt.anchor.setTo(.5,.5);
@@ -43,7 +44,7 @@ BasicGame.MainMenu.prototype = {
         this.instrBut = this.game.add.button(0,0, 'UI_TA', this.onClickFunction, this, 'button', 'button', 'button');
         this.instrBut.anchor.setTo(.5,.5);
         this.instrBut.position.setTo( 6* this.game.width/8 - this.instrBut.width/2,
-                                      7 * this.game.height/8 - this.instrBut.height/2);
+                                      5 * this.game.height/6 - this.instrBut.height/2);
 
         this.instrBut.txt = this.game.add.bitmapText(this.instrBut.position.x -5, this.instrBut.position.y,
          'zantroke', 'INSTRUCTIONS', 18);
@@ -51,6 +52,11 @@ BasicGame.MainMenu.prototype = {
         this.instrBut.onInputOver.add(this.tiltButton, this, 0);
         this.instrBut.onInputOut.add(this.stopTilt, this, 0);
 
+        if(BasicGame.score != undefined){
+            var highscoreText = this.add.bitmapText(game.width/2, 7 * game.height/8,
+            'zantroke', 'HIGHSCORE: ' + BasicGame.score, 30);
+            highscoreText.anchor.setTo(.5,0);
+        }
     },
 
     loadSettings: function(){
@@ -60,6 +66,10 @@ BasicGame.MainMenu.prototype = {
 
         if(localStorage['musicEnabled'] != null){
             BasicGame.musicEnabled = (localStorage['musicEnabled'] == 'true');
+        }
+
+        if(localStorage['score'] != null){
+            BasicGame.score = parseInt(localStorage['score']);
         }
     },
 
