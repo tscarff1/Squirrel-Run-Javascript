@@ -873,7 +873,7 @@ BasicGame.Game.prototype = {
 	checkCollisions: function(){
 		//Check for enemy collisions
 		this.enemies.forEach(function(enemy){
-				if(Phaser.Rectangle.intersects(this.toon.hitbox, enemy.hitbox)){
+				if(Phaser.Rectangle.intersects(this.toon.hitbox, enemy.hitbox) && !this.toon.isHurt){
 					//Start by performing the event specific to each enemy
 					if(enemy == this.moleEnemy)
 						this.collideMole();
@@ -1511,8 +1511,12 @@ BasicGame.Game.prototype = {
     },
 
 	gameOver: function(){
-		BasicGame.score = this.score;
-		localStorage['score'] = this.score + '';
+		if(this.score > BasicGame.score){
+			BasicGame.score = this.score;
+			localStorage['score'] = this.score + '';
+			kongregate.stats.submit("score",this.score);
+
+		}
 		BasicGame.acornsCollected = this.acornsCollected;
 		if(BasicGame.musicEnabled)
 			this.music.stop();
