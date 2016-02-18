@@ -9,6 +9,17 @@ BasicGame.MainMenu.prototype = {
     },
 
     create: function() {
+        this.loadSettings();
+
+        if(BasicGame.menutheme == null){
+            BasicGame.menutheme = this.add.audio('Menu Theme',.6);
+            BasicGame.menutheme.loop = true;
+        }
+        if(BasicGame.musicEnabled && !BasicGame.menutheme.isPlaying){
+            BasicGame.menutheme.play();
+        }
+
+
         this.game.stage.backgroundColor = '#006fe6';
         this.add.sprite(0,0, 'UI_TA').frameName ='Toon the Squirrel Standing';
         var title = this.add.sprite(100,100, 'UI_TA');
@@ -40,6 +51,16 @@ BasicGame.MainMenu.prototype = {
         this.instrBut.onInputOver.add(this.tiltButton, this, 0);
         this.instrBut.onInputOut.add(this.stopTilt, this, 0);
 
+    },
+
+    loadSettings: function(){
+        if(localStorage['soundEnabled'] != null){
+            this.soundEnabled = (localStorage['soundEnabled'] == 'true');
+        }
+
+        if(localStorage['musicEnabled'] != null){
+            BasicGame.musicEnabled = (localStorage['musicEnabled'] == 'true');
+        }
     },
 
     update: function() {

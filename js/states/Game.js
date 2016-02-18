@@ -142,8 +142,10 @@ BasicGame.Game.prototype = {
 		this.setupDisplay();
 
 		this.music.loop = true;
-		if(BasicGame.musicEnabled)
+		if(BasicGame.musicEnabled){
+			BasicGame.menutheme.stop();
 			this.music.play();
+		}
 
 		this.startBtn = this.game.add.button(0,0, 'UI_TA', this.togglePause, this, 'button', 'button', 'button');
 		this.startBtn.position.x = this.game.width - this.startBtn.width - 10;
@@ -291,7 +293,6 @@ BasicGame.Game.prototype = {
 		this.drinkglow.alpha = .7;
 		this.drinkglow.scale.setTo(.61,.61);
 		this.glowtween = this.add.tween(this.drinkglow.scale).to({x: .75, y:.75}, 800, Phaser.Easing.Linear.Out, true, 0, Number.MAX_VALUE, true);
-		//this.glowtween.yoyo(true, 0);
 		this.drinkglow.angle = -20;
 		this.drinkglow.tint = 0xF2FF00
 		this.drinkglow.blendMode = PIXI.blendModes.ADD;
@@ -564,7 +565,7 @@ BasicGame.Game.prototype = {
 									this.deer.position.y+ this.DEERBOX[1],
 									this.deer.width - this.DEERBOX[2],
 									this.deer.height - this.DEERBOX[3]);
-
+		this.deer.animations.add('running', Phaser.Animation.generateFrameNames('deer_', 0,1), 2, true);
 		this.sprites.add(this.deer);
 		this.deer.isReset = true;
 	},
@@ -1216,7 +1217,7 @@ BasicGame.Game.prototype = {
 			
 			this.deer.position.x =  150 + Math.random() * (game.width-200);
 
-			this.deer.animations.add('running', Phaser.Animation.generateFrameNames('deer_', 0,1), 2, true);
+			
 			this.deer.animations.play('running', 10, true);
 
 

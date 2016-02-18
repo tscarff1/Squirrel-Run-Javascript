@@ -11,19 +11,11 @@ BasicGame.Preloader.prototype = {
 
     preload: function() {
         //setup the loader image that was loaded in Boot.js
-        this.preloadBar = this.add.sprite(0, 0, 'preloader', 'preloader_bar.png');
-        this.preloadBar.x = this.game.width * .5 - (this.preloadBar.width * .5);
-        this.preloadBar.y = this.game.height * .5 - (this.preloadBar.height * .5);
-        this.load.setPreloadSprite(this.preloadBar);
-
-        //  This sets the preloadBar sprite as a loader sprite.
-        //  What that does is automatically crop the sprite from 0 to full-width
-        //  as the files below are loaded in.
-
-        this.load.setPreloadSprite(this.preloadBar);
+     //   this.hyperBar = this.add.sprite(231, 58, 'UI_TA', 'Hyper Bar Meter');
 
 
-        this.load.atlas('ta0', 'assets/images/atlases/ta0.png', 'assets/json/atlases/ta0.json');
+       // this.load.setPreloadSprite(this.hyperBar);
+
         this.load.atlasJSONHash('Play_TA', 'assets/images/Play_TA.png', 'assets/json/Play_TA.json');
         this.load.atlasJSONHash('UI_TA', 'assets/images/UI_TA.png', 'assets/json/UI_TA.json');
         this.load.atlasJSONHash('UI_TA2', 'assets/images/UI_TA2.png', 'assets/json/UI_TA2.json');
@@ -31,6 +23,7 @@ BasicGame.Preloader.prototype = {
 
         this.load.bitmapFont('zantroke', 'assets/fonts/zantroke_0.png', 'assets/fonts/zantroke.fnt');
 
+        game.load.audio('Menu Theme', 'assets/audio/MenuTheme.mp3', 'assets/audio/MenuTheme.ogg');
         game.load.audio('Game Theme', 'assets/audio/Squirrel_Run_Theme.mp3','assets/audio/Squirrel_Run_Theme.ogg');
         game.load.audio('Ow','assets/audio/ow.ogg');
         game.load.audio('Boing', 'assets/audio/boing.mp3', 'assets/audio/boing.ogg');
