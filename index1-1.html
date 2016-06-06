@@ -1,0 +1,49 @@
+<!DOCTYPE HTML>
+<!-- Version 1.0 -->
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="user-scalable=0, initial-scale=1, minimum-scale=1, maximum-scale=1, width=device-width, minimal-ui=1">
+    <title>Squirrel Run</title>
+    <script src='https://cdn1.kongregate.com/javascripts/kongregate_api.js'></script>
+    <script>
+            // Load the API
+        var kongregate;
+        kongregateAPI.loadAPI(onComplete);
+         
+        // Callback function
+        function onComplete(){
+          // Set the global kongregate API object
+          kongregate = kongregateAPI.getAPI();
+        }
+    </script>
+    <script src="js/libs/phaser.min.js"></script>
+    <script src="js/states/loading/Boot.js"></script>
+    <script src="js/states/loading/Preloader.js"></script>
+    <script src="js/states/MainMenu.js"></script>
+    <script src="js/states/Game.js"></script>
+    <script src="js/states/GameOver.js"></script>
+    <script src="js/states/Instructions.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+
+    
+</head>
+
+<body>
+    <div>
+<script type="text/javascript">
+        var game = new Phaser.Game(750, 450, Phaser.AUTO, 'game');
+        //Add the States your game has.
+        //remember to include them above.
+        game.state.add('Boot', BasicGame.Boot);
+        game.state.add('Preloader', BasicGame.Preloader);
+        game.state.add('MainMenu', BasicGame.MainMenu);
+        game.state.add('Game', BasicGame.Game);
+        game.state.add('Instructions', BasicGame.Instructions);
+        game.state.add('GameOver', BasicGame.GameOver); 
+        //Now start the Boot state.
+        game.state.start('Boot');
+    </script>
+    </div>
+</body>
+</html>

@@ -57,6 +57,10 @@ BasicGame.MainMenu.prototype = {
             'zantroke', 'HIGHSCORE: ' + BasicGame.score, 30);
             highscoreText.anchor.setTo(.5,0);
         }
+
+        this.creditText = this.add.bitmapText(game.width-5, 5, 'zantroke', 
+            'SFX from freesfx.co.uk and freesound.org', 19);
+        this.creditText.anchor.setTo(1,0);
     },
 
     loadSettings: function(){

@@ -238,7 +238,7 @@ BasicGame.Game.prototype = {
 	//----- SETUP FUNCTIONS -----
 	setupBG:function(){
 		//draw the background
-		this.hills = this.add.tileSprite(0, this.game.height/2 +100, 800, 100,'ground');
+		this.hills = this.add.tileSprite(0, this.game.height/2 +100, 800, 100,'PLAY_TA', 'hills');
 		this.sprites.add(this.hills);
 	    var botGraphics = this.add.graphics(0,0);
 	    botGraphics.moveTo(0, this.BOTTOM);
@@ -261,7 +261,7 @@ BasicGame.Game.prototype = {
 	},
 
 	setupToon: function(){
-		this.toon = this.add.sprite(0,0,'Play_TA', 'Toon_Running_1');
+		this.toon = this.add.sprite(0,0,'PLAY_TA', 'Toon_Running_1');
 		this.toon.position.setTo(50,250);
 		this.toon.animations.add('running', Phaser.Animation.generateFrameNames('Toon_Running_',1,3),3, true);
 		this.toon.animations.add('jumping', 'Toon_Running_1', 2, true);
@@ -274,12 +274,12 @@ BasicGame.Game.prototype = {
 	},
 
 	setupDrink: function(){
-		this.drink = this.add.sprite(this.game.width + 50,250,'Play_TA','EnergyDrink');
+		this.drink = this.add.sprite(this.game.width + 50,250,'PLAY_TA','EnergyDrink');
 		this.drink.isReset = true;
 		this.drink.scale.setTo(.6,.6);
 		this.drink.angle = -20;
 		this.drink.anchor.setTo(.5,.5);
-		this.drinkglow = this.add.sprite(this.game.width + 50,250, 'Play_TA', 'EnergyDrink');
+		this.drinkglow = this.add.sprite(this.game.width + 50,250, 'PLAY_TA', 'EnergyDrink');
 		this.drinkglow.anchor.setTo(.5,.5);
 		this.drinkglow.alpha = .7;
 		this.drinkglow.scale.setTo(.61,.61);
@@ -320,13 +320,13 @@ BasicGame.Game.prototype = {
 		this.scoreText = this.add.bitmapText(hyperPanel.position.x, 10, 
 			'zantroke', 'Score: 0', 30);
 
-		var acornBG = this.add.sprite(500,10,'Play_TA', 'acorn');
+		var acornBG = this.add.sprite(500,10,'PLAY_TA', 'acorn');
 		acornBG.angle = 40;
 		acornBG.scale.setTo(1.2,1.2);
 		acornBG.tint = 0x888888;
 		acornBG.alpha = .6;
 		
-		this.acornDisplay = this.add.sprite(acornBG.position.x,10,'Play_TA','acorn');
+		this.acornDisplay = this.add.sprite(acornBG.position.x,10,'PLAY_TA','acorn');
 		this.acornDisplay.angle = 40;
 		this.acornDisplay.scale.setTo(1.2,1.2);
 		this.acornDisplay.tint = 0xeeeeee;
@@ -340,9 +340,9 @@ BasicGame.Game.prototype = {
 	},
 
 	setUpSAM: function(){
-		this.sun = this.add.sprite(100,0,'Play_TA','sun');
+		this.sun = this.add.sprite(100,0,'PLAY_TA','sun');
 		this.sun.anchor.x = .5;
-		this.moon = this.add.sprite(0,0, 'Play_TA', 'moon');
+		this.moon = this.add.sprite(0,0, 'PLAY_TA', 'moon');
 		this.moon.anchor.x=.5;
 		this.samAngle = 0;
 		this.sam = this.add.group();
@@ -365,7 +365,7 @@ BasicGame.Game.prototype = {
 			var cloud = this.add.sprite(
 				50 + Math.random() * (game.width - 100),
 			 -10 + Math.random() * (game.height - 200),
-			 'PLAY_TA2', 'Cloud' + cloudNum);
+			 'PLAY_TA', 'Cloud' + cloudNum);
 			var scale = .3 + .5 * Math.random();
 			var speed = this.CLOUDSPEED[0] + Math.random() * (this.CLOUDSPEED[1]);
 			cloud.moveTween =this.add.tween(cloud.position).to({x: -1 * cloud.width}, cloud.position.x / game.width * speed);	
@@ -387,7 +387,7 @@ BasicGame.Game.prototype = {
 			var cloudNum = 1 +  Math.floor((Math.random() * 3));
 			var cloud = this.add.sprite(game.width,
 			 -10 + Math.random() * (game.height - 200),
-			 'PLAY_TA2', 'Cloud' + cloudNum);
+			 'PLAY_TA', 'Cloud' + cloudNum);
 			var scale = .3 + .5 * Math.random();
 			var speed = this.CLOUDSPEED[0] + Math.random() * (this.CLOUDSPEED[1]);
 			cloud.moveTween = this.add.tween(cloud.position).to({x: -1 * cloud.width}, speed);	
@@ -405,7 +405,7 @@ BasicGame.Game.prototype = {
 	},
 
 	setupWinter: function(){
-		this.caution = this.add.sprite(this.cautionX ,this.game.height/3,'Play_TA', 'Caution');
+		this.caution = this.add.sprite(this.cautionX ,this.game.height/3,'PLAY_TA', 'Caution');
 		this.caution.scale.setTo(1.5,1.5);
 
 		this.cautionText = this.add.bitmapText(this.caution.position.x + this.caution.width/2,
@@ -428,7 +428,7 @@ BasicGame.Game.prototype = {
    		this.snowEmitter.gravity = 100;
    		this.snowEmitter.start(false, 1000,60);
 
-   		this.winterClouds = this.add.sprite(0,0,'Play_TA', 'Winter_1');
+   		this.winterClouds = this.add.sprite(0,0,'PLAY_TA', 'Winter_1');
    		this.winterClouds.scale.setTo(.6,.6);
    		this.winterClouds.anchor.setTo(1,0);
 	},
@@ -476,9 +476,9 @@ BasicGame.Game.prototype = {
 	},
 
 	setupMole: function(){
-		this.mole = this.add.sprite(this.game.width,this.BOTTOM,'Play_TA', 'MoleEnemy');
+		this.mole = this.add.sprite(this.game.width,this.BOTTOM,'PLAY_TA', 'MoleEnemy');
 		this.MOLEHEIGHT = this.mole.height;
-		this.dirt = this.add.sprite(this.game.width,0,'Play_TA', 'MoleDirt');
+		this.dirt = this.add.sprite(this.game.width,0,'PLAY_TA', 'MoleDirt');
 		this.mole.position.y = this.BOTTOM - 2* 	this.dirt.height;
 		this.dirt.position.y = this.BOTTOM - this.dirt.height;
 	
@@ -500,7 +500,7 @@ BasicGame.Game.prototype = {
 	},
 
 	setupBaseball: function(){
-		this.baseball = this.add.sprite(0, 0, 'Play_TA', 'baseball');
+		this.baseball = this.add.sprite(0, 0, 'PLAY_TA', 'baseball');
 		this.baseball.hitbox = new Phaser.Rectangle(this.baseball.position.x + this.BBOX[0],
 													this.baseball.position.y + this.BBOX[1],
 													this.baseball.width - this.BBOX[0] - this.BBOX[2],
@@ -516,7 +516,7 @@ BasicGame.Game.prototype = {
 	},
 
 	setupCrow: function(){
-		this.crow = this.add.sprite(0,0, 'Play_TA', 'Crow_1_1');
+		this.crow = this.add.sprite(0,0, 'PLAY_TA', 'Crow_1_1');
 		this.crow.scale.setTo(this.CROWSCALE, this.CROWSCALE);
 		this.crow.position.y = this.game.height/2;
 		this.crow.position.x = this.game.width + 10;
@@ -531,7 +531,16 @@ BasicGame.Game.prototype = {
 	},
 
 	setupCar: function(){
-		this.car = this.add.sprite(-1000,0,'Play_TA', 'truck_0');
+		this.car = this.add.sprite(-1000,0,'PLAY_TA', 'truck_0');
+		this.clock = this.add.sprite(0,0,'PLAY_TA', 'clock');
+		this.clock.scale.setTo(1.4,1.4);
+		this.clock.anchor.setTo(.5,.5);
+		this.clock.position.setTo(-100,100);
+
+		this.clockhand = this.add.sprite(this.clock.x, this.clock.y, 'PLAY_TA', 'clockhand');
+		this.clockhand.anchor.setTo(.5,.5);
+		this.clockhand.scale.setTo(1.4,1.4);
+
 		this.car.isReset = false;
 		this.car.animations.add('standard', Phaser.Animation.generateFrameNames('truck_',0,1),2,true);
 		this.car.animations.play('standard', 10, true);
@@ -550,7 +559,7 @@ BasicGame.Game.prototype = {
 	},
 
 	setupDeer: function(){
-		this.deer = this.add.sprite(this.game.width/2,this.game.height/2 + 100, 'PLAY_TA2', 'deer_0');
+		this.deer = this.add.sprite(this.game.width/2,this.game.height/2 + 100, 'PLAY_TA', 'deer_0');
 		this.deer.scale.setTo(.6,.6);
 		this.deer.anchor.setTo(.5,0);
 		this.deer.position.y = this.game.height + 20;
@@ -621,6 +630,7 @@ BasicGame.Game.prototype = {
 
 	updateRide: function(){
 		if(this.toon.isRiding){
+			this.clockhand.angle = this.rideTime / this.RIDETIMER * 360;
 			if(this.rideTime < this.RIDETIMER)
 				this.rideTime++;
 			else if(this.rideTime == this.RIDETIMER){
@@ -643,12 +653,14 @@ BasicGame.Game.prototype = {
 			if(this.soundEnabled){
 				this.byeSound.play();
 			}
+			this.clock.position.x = -1000;
+			this.clockhand.position.x = this.clock.position.x;
 	},
 
 	initTrees: function(){
 		var numTrees = 2 + Math.random() * 3; 
 		for(var i = 0; i < numTrees; i++){
-			var tree = this.add.sprite(this.game.width, this.BOTTOM, 'PLAY_TA2','tree');
+			var tree = this.add.sprite(this.game.width, this.BOTTOM, 'PLAY_TA','tree');
 			var scale = .1 + (Math.random() * .2);
 			tree.anchor.setTo(0,1);
 			tree.scale.setTo(scale, scale);
@@ -670,7 +682,7 @@ BasicGame.Game.prototype = {
 			this.treeTime+= this.gameSpeed;			
 		}
 		else{
-			var tree = this.add.sprite(this.game.width, this.BOTTOM, 'PLAY_TA2','tree');
+			var tree = this.add.sprite(this.game.width, this.BOTTOM, 'PLAY_TA','tree');
 			var scale = .1 + (Math.random() * .2);
 			tree.anchor.setTo(0,1);
 			tree.scale.setTo(scale, scale);
@@ -700,7 +712,7 @@ BasicGame.Game.prototype = {
 	spawnAcorn: function(){
 		var acornY = this.ACORNMINY + (Math.random() * (this.BOTTOM - this.ACORNMINY - 50));
 
-		var acorn = this.add.sprite(this.game.width,acornY, 'Play_TA', 'acorn');
+		var acorn = this.add.sprite(this.game.width,acornY, 'PLAY_TA', 'acorn');
 		acorn.scale.setTo(.75,.75);
 		var travelTime = 3000 + Math.random() * 2000;
 		//move the acorn across the stage
@@ -1160,7 +1172,13 @@ BasicGame.Game.prototype = {
 		this.toon.rideTween  = this.add.tween(this.toon.position).to({x: 100 + toonX}, 500);
 		this.toon.rideTween.start();
 		this.car.rideTween.start();
-		this.car.rideTween.onComplete.add(function(){this.adjustSpeed(2 * this.gameSpeed)}, this);
+		
+		this.car.rideTween.onComplete.add(function(){
+			this.adjustSpeed(2 * this.gameSpeed);
+			this.clock.position.setTo(370,200);
+			this.clockhand.position.setTo(this.clock.position.x, this.clock.position.y);
+		}, this);
+
 		if(this.soundEnabled)
 				this.engineSound.play();
 	},
@@ -1214,7 +1232,7 @@ BasicGame.Game.prototype = {
 			this.deer.animations.play('running', 10, true);
 
 
-			this.deersign = this.add.sprite(this.deer.position.x,this.game.height/2,'PLAY_TA2','deer_sign');
+			this.deersign = this.add.sprite(this.deer.position.x,this.game.height/2,'PLAY_TA','deer_sign');
 			this.deersign.anchor.setTo(.5,0);
 			this.deersign.blinkTween = this.add.tween(this.deersign).to({alpha:0,},
 			 100, Phaser.Easing.Exponential.Out, true, 1000, 3,true);
@@ -1511,8 +1529,8 @@ BasicGame.Game.prototype = {
     },
 
 	gameOver: function(){
-		if(this.score > BasicGame.score){
-			BasicGame.score = this.score;
+		BasicGame.score = this.score;
+		if(localStorage['score'] != undefined && this.score > localStorage['score']){
 			localStorage['score'] = this.score + '';
 			kongregate.stats.submit("score",this.score);
 

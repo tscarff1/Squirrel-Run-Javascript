@@ -10,6 +10,7 @@ BasicGame.Preloader = function(game) {
 BasicGame.Preloader.prototype = {
 
     preload: function() {
+
         var panel = this.add.sprite(game.width/2, game.height/2, 'PRELOAD_TA', 'bg');
         panel.scale.setTo(2.2,2);
         panel.anchor.setTo(.5,.5);
@@ -20,16 +21,16 @@ BasicGame.Preloader.prototype = {
         this.meter = this.add.sprite(holder.x - holder.width/2 + 10, holder.y, 'PRELOAD_TA', 'bar');
         this.meter.anchor.setTo(0,.5);
         this.load.setPreloadSprite(this.meter);
-
-        this.acorn = this.add.sprite(this.meter.position.x + this.meter.width, game.height/2, 'PRELOAD_TA', 'acorn');
-        this.acorn.anchor.setTo(.5,.6);
+        
+        //this.acorn = this.add.sprite(this.meter.position.x + this.meter.width, game.height/2, 'PRELOAD_TA', 'acorn');
+      //  this.acorn.anchor.setTo(.5,.6);
         //setup the loader image that was loaded in Boot.js
      //   this.hyperBar = this.add.sprite(231, 58, 'UI_TA', 'Hyper Bar Meter');
 
 
        // this.load.setPreloadSprite(this.hyperBar);
 
-        this.load.atlasJSONHash('Play_TA', 'assets/images/Play_TA.png', 'assets/json/Play_TA.json');
+        this.load.atlasJSONHash('PLAY_TA', 'assets/images/PLAY_TA.png', 'assets/json/PLAY_TA.json');
         this.load.atlasJSONHash('UI_TA', 'assets/images/UI_TA.png', 'assets/json/UI_TA.json');
         this.load.atlasJSONHash('UI_TA2', 'assets/images/UI_TA2.png', 'assets/json/UI_TA2.json');
         this.load.atlasJSONHash('PLAY_TA2', 'assets/images/PLAY_TA2.png', 'assets/json/PLAY_TA2.json');
@@ -53,17 +54,21 @@ BasicGame.Preloader.prototype = {
         game.load.audio('GameOver Theme', 'assets/audio/GameOverTheme.mp3', 'assets/audio/GameOverTheme.ogg');
         //Without this there will be a delay in-game before the music starts
         this.music = this.add.audio('Game Theme');
+        game.load.start();
     },
 
     create: function() {
         var text = this.add.bitmapText(game.width/2, game.height/4, 'zantroke', 'LOADING...', 35);
+        
         text.anchor.setTo(.5,.5);
 
     },
+
+
     update: function(){
-        if(!this.music.isDecoding)
-            this.state.start('MainMenu');
-        this.acorn.position.x = this.meter.position.x + this.meter.width;
+        if(this.music.isDecoded)
+           this.state.start('MainMenu');
+       //    this.acorn.position.x = this.meter.position.x + this.meter.width;
     }
 
 };
